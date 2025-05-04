@@ -7,7 +7,9 @@ import 'onboarding_screen_four.dart';
 import '../falling_petal.dart';
 
 class OnboardingMain extends StatefulWidget {
-  const OnboardingMain({super.key});
+  const OnboardingMain({super.key, this.pageIndex});
+
+  final int? pageIndex;
 
   @override
   State<OnboardingMain> createState() => _OnboardingMainState();
@@ -47,6 +49,14 @@ class _OnboardingMainState extends State<OnboardingMain> {
         selectedTag: _selectedTag,
       ),
     ];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if(widget.pageIndex != null) {
+      _currentPage = widget.pageIndex!;
+    }
   }
 
   @override

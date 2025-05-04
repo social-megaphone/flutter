@@ -4,6 +4,7 @@ import '../lounge/lounge_screen_main.dart';
 import '../save/save_screen_main.dart';
 import '../badge/badge_screen_main.dart';
 import '../profile/profile_screen_main.dart';
+import 'onboarding/onboarding_main.dart';
 
 class AfterOnboardingMain extends StatefulWidget {
   const AfterOnboardingMain({super.key, this.pageIndex});
@@ -114,7 +115,20 @@ class _AfterOnboardingMainState extends State<AfterOnboardingMain> {
                   IconButton(
                     icon: FloatingActionButton(
                       onPressed: () {
-                        // onboarding쪽으로 넘겨야대.
+                        Navigator.of(context).pushReplacement(
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) => OnboardingMain(
+                              pageIndex: 1,
+                            ),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                            transitionDuration: const Duration(milliseconds: 1500),
+                          ),
+                        );
                       },
                       backgroundColor: Color(0xFF8C7154),
                       shape: RoundedRectangleBorder(
