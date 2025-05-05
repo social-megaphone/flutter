@@ -5,6 +5,7 @@ import 'onboarding_screen_two.dart';
 import 'onboarding_screen_three.dart';
 import 'onboarding_screen_four.dart';
 import '../falling_petal.dart';
+import '../widgets.dart';
 
 class OnboardingMain extends StatefulWidget {
   const OnboardingMain({super.key, this.pageIndex});
@@ -20,6 +21,8 @@ class _OnboardingMainState extends State<OnboardingMain> {
   bool _isNextEnabled = true;
   int _dayCount = 0; // two에서 고른 day
   String _selectedTag = '';
+
+  late final List<FallingPetal> _shuffledPetals;
 
   List<Widget> _buildOnboardingPages() {
     return [
@@ -57,19 +60,27 @@ class _OnboardingMainState extends State<OnboardingMain> {
     if(widget.pageIndex != null) {
       _currentPage = widget.pageIndex!;
     }
+
+    final List<FallingPetal> petals = [];
+    for (int cycle = 0; cycle < 4; cycle++) {
+      final indices = List<int>.generate(5, (i) => i)..shuffle();
+      for (int i = 0; i < 5; i++) {
+        petals.add(FallingPetal(
+          indexForPositionX: indices[i],
+          fallDelay: Duration(milliseconds: 500 * (cycle * 5 + i)),
+        ));
+      }
+    }
+    _shuffledPetals = petals;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7DC),
+      backgroundColor: CustomColors.defaultBackgroundColor,
       body: Stack(
         children: [
-          ...List.generate(45, (index) => FallingPetal(
-            indexForPositionX: index % 5,
-            fallDelay: Duration(milliseconds: 500 * index),
-            //fallDelay: _fallDelay(index),
-          )),
+          ..._shuffledPetals,
           // 화면 전환 부분
           SafeArea(
             child: Center(

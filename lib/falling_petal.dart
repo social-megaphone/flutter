@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class FallingPetal extends StatefulWidget {
@@ -13,7 +15,11 @@ class FallingPetal extends StatefulWidget {
 class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late double _positionX; // 고정된 x값
-  late Animation<double> _positionY; // 변해야할 y값
+  Animation<double>? _positionY; // 변해야할 y값
+  late Animation<double> _horizontalWiggle;
+  late Animation<double> _rotation;
+  double _rotationOffset = 0.0;
+  bool _rotateClockwise = true;
 
   double positionXCalculator(double screenWidth, int indexForPositionX) {
     if(widget.indexForPositionX == 0) {
@@ -37,7 +43,7 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15), // 꽃잎이 한 번 떨어지는 데 걸리는 시간
+      duration: const Duration(seconds: 10), // 꽃잎이 한 번 떨어지는 데 걸리는 시간
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -47,16 +53,29 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
       });
 
       _positionY = Tween<double>(begin: -50, end: MediaQuery.of(context).size.height + 50)
-          .animate(CurvedAnimation(parent: _controller, curve: Curves.linear))
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
         ..addStatusListener((status) {
           if (status == AnimationStatus.completed) {
             _controller.reset();
             setState(() {
-              _positionX = positionXCalculator(screenWidth, widget.indexForPositionX);
+              _positionX = positionXCalculator(screenWidth, widget.indexForPositionX) + Random().nextDouble() * 10 - 5;
+              _rotationOffset = Random().nextDouble() * 2 * pi;
+              _rotateClockwise = Random().nextBool();
             });
             _controller.forward();
           }
         });
+
+      // Add randomness to horizontal wiggle amplitude
+      final wiggleAmplitude = 30 + Random().nextDouble() * 20; // 30 to 50
+
+      _horizontalWiggle = Tween<double>(begin: -wiggleAmplitude, end: wiggleAmplitude).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+      );
+
+      _rotation = Tween<double>(begin: 0, end: _rotateClockwise ? 2 * pi : -2 * pi).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.linear),
+      );
 
       Future.delayed(widget.fallDelay, () {
         _controller.forward();
@@ -73,19 +92,24 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
 
+    if (_positionY == null) return const SizedBox();
+
     return AnimatedBuilder(
-      animation: _positionY,
+      animation: _positionY!,
       builder: (context, child) {
         return Positioned(
-          top: _positionY.value,
-          left: _positionX,
+          top: _positionY!.value,
+          left: _positionX + _horizontalWiggle.value,
           child: Opacity(
             opacity: 1.0,
-            child: Image.asset(
-              // 정사각형 사이즈로 준비
-              'assets/images/petal.png',
-              width: 37,
-              height: 37,
+            child: Transform.rotate(
+              angle: _rotation.value + _rotationOffset,
+              child: Image.asset(
+                // 정사각형 사이즈로 준비
+                'assets/images/petal.png',
+                width: 37,
+                height: 37,
+              ),
             ),
           ),
         );

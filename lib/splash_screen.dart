@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // kIsWeb
 
 import 'onboarding/onboarding_main.dart';
 import 'widgets.dart';
@@ -13,16 +12,31 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  Future<void> _loadAssetsAndDelayAndNavigate() async {
-    /// 여기에 들어갈 image를 꽃잎 이미지로 바꿔줘야 함.
-    await precacheImage(
-      AssetImage('assets/images/background_onboarding_screen.png'),
-      context,
-    );
+  // Slogan, Character, Title을 보여줄 지 결정하는 boolean 변수 3개
+  bool _showSlogan = false;
+  bool _showCharacter = false;
+  bool _showTitle = false;
 
-    await Future.delayed(Duration(milliseconds: 750 * 6));
+  // Slogan, Character, Title을 차례대로 나타내고, 온보딩 화면으로 Navigate
+  Future<void> _animateAndNavigate() async {
 
-    // 이제 안전하게 다음 화면으로 이동
+    // 슬로건 나타내기
+    await Future.delayed(Duration(milliseconds: 750), () {
+      setState(() => _showSlogan = true);
+    });
+    // 캐릭터 나타내기
+    await Future.delayed(Duration(milliseconds: 750), () {
+      setState(() => _showCharacter = true);
+    });
+    // 타이틀 나타내기
+    await Future.delayed(Duration(milliseconds: 750), () {
+      setState(() => _showTitle = true);
+    });
+
+    await Future.delayed(Duration(milliseconds: 750 * 3));
+
+    // SplashScreen이 Widget Tree에 Mounted 되어있을 때만 온보딩 화면으로 Navigate
+    if(!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => const OnboardingMain(),
@@ -37,78 +51,40 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  // Slogan, Character, Title을 보여줄 지 결정하는 boolean 변수 3개
-  bool _showSlogan = false;
-  bool _showCharacter = false;
-  bool _showTitle = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // 순차적으로 애니메이션 보이게 하기
-    Future.delayed(Duration(milliseconds: 750), () {
-      setState(() => _showSlogan = true);
-    });
-    Future.delayed(Duration(milliseconds: 750 * 2), () {
-      setState(() => _showCharacter = true);
-    });
-    Future.delayed(Duration(milliseconds: 750 * 3), () {
-      setState(() => _showTitle = true);
-    });
-  }
-
   // initState에서는, MediaQuery, Theme등이 준비되지 않았음
+  // 그래서 _animateAndNavigate를 didChangeDependencies에서 처리
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadAssetsAndDelayAndNavigate();
+    _animateAndNavigate();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CustomColors.splashScreenBackgroundColor,
+      backgroundColor: CustomColors.defaultBackgroundColor,
       body: SafeArea(
-        child: GestureDetector(
-          onTap: () {
-            // 웹의 경우 터치하면 실행
-            if(kIsWeb) {
-              Navigator.of(context).pushReplacement(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const OnboardingMain(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  transitionDuration: const Duration(milliseconds: 1000),
-                ),
-              );
-            }
-            // 모바일의 경우 아무것도 실행하지 않음.
-          },
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            padding: EdgeInsets.all(20),
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AnimatedOpacity(
                   opacity: _showSlogan ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 850),
+                  duration: Duration(milliseconds: 750),
                   child: _slogan(),
                 ),
                 SizedBox(height: 40),
                 AnimatedOpacity(
                   opacity: _showCharacter ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 850),
+                  duration: Duration(milliseconds: 750),
                   child: _character(),
                 ),
                 AnimatedOpacity(
                   opacity: _showTitle ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 850),
+                  duration: Duration(milliseconds: 750),
                   child: _title(),
                 ),
               ],
@@ -178,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFFFDE9F).withOpacity(0.5), // 노란빛 후광
+                color: Color(0x80FFDE9F),// 노란빛 후광
                 blurRadius: 30,
                 spreadRadius: 10,
               ),
