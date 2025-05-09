@@ -10,6 +10,10 @@ class ProfileScreenMain extends StatefulWidget {
 class _ProfileScreenMainState extends State<ProfileScreenMain> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      
+    );
   }
 }

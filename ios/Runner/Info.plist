@@ -45,5 +45,24 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- 사진 갤러리 접근 권한 -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>루틴 인증을 위해 사진 갤러리 접근 권한이 필요합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>루틴 인증을 위해 카메라 접근 권한이 필요합니다.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>비디오 촬영 시 마이크 접근 권한이 필요합니다.</string>
+	
+	<!-- iOS 14 이상에서 포토 라이브러리 제한적 접근 허용 -->
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
+	
+	<!-- iOS 앱 샌드박스 정책 관련 설정 -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

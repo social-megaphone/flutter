@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import 'splash_screen.dart';
 
-void main() {
+void main() async {
+  // 플러그인이 제대로 초기화되도록 추가
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Flutter 앱 로드 시 발생하는 오류 보고 설정
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kDebugMode) {
+      print('FlutterError: ${details.exception}');
+      print('Stack trace: ${details.stack}');
+    }
+  };
+
   runApp(const MyApp());
 }
 

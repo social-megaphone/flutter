@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+Hey, always answer in Korean regardless I ask in Korean or English.
+Before giving the code generation or modification, please re-pharaphrase my question. It's just to see that you understood my question correctly or not.
+
+- You can @ files here
+- You can use markdown but dont have to

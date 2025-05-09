@@ -20,6 +20,8 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
   late Animation<double> _rotation;
   double _rotationOffset = 0.0;
   bool _rotateClockwise = true;
+  // Future.delayed 참조 저장을 위한 변수
+  Future<void>? _delayedForward;
 
   double positionXCalculator(double screenWidth, int indexForPositionX) {
     if(widget.indexForPositionX == 0) {
@@ -47,6 +49,8 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return; // mounted 체크 추가
+      
       final screenWidth = MediaQuery.of(context).size.width;
       setState(() {
         _positionX = positionXCalculator(screenWidth, widget.indexForPositionX);
@@ -55,7 +59,7 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
       _positionY = Tween<double>(begin: -50, end: MediaQuery.of(context).size.height + 50)
           .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
         ..addStatusListener((status) {
-          if (status == AnimationStatus.completed) {
+          if (status == AnimationStatus.completed && mounted) { // mounted 체크 추가
             _controller.reset();
             setState(() {
               _positionX = positionXCalculator(screenWidth, widget.indexForPositionX) + Random().nextDouble() * 10 - 5;
@@ -77,21 +81,25 @@ class _FallingPetalState extends State<FallingPetal> with SingleTickerProviderSt
         CurvedAnimation(parent: _controller, curve: Curves.linear),
       );
 
-      Future.delayed(widget.fallDelay, () {
-        _controller.forward();
+      // Future.delayed 참조를 저장
+      _delayedForward = Future.delayed(widget.fallDelay, () {
+        if (mounted) { // mounted 체크 추가
+          _controller.forward();
+        }
       });
     });
   }
 
   @override
   void dispose() {
+    // 보류 중인 Future.delayed 취소
+    _delayedForward?.timeout(Duration.zero, onTimeout: () => null);
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
     if (_positionY == null) return const SizedBox();
 
     return AnimatedBuilder(

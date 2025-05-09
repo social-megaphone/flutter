@@ -12,14 +12,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  // Slogan, Character, Title을 보여줄 지 결정하는 boolean 변수 3개
+  // Slogan, Character, Blur, Title을 보여줄 지 결정하는 boolean 변수 4개
   bool _showSlogan = false;
   bool _showCharacter = false;
+  bool _showBlur = false;
   bool _showTitle = false;
 
-  // Slogan, Character, Title을 차례대로 나타내고, 온보딩 화면으로 Navigate
+  // Slogan, Character, Blur, Title을 차례대로 나타내고, 온보딩 화면으로 Navigate
   Future<void> _animateAndNavigate() async {
-
     // 슬로건 나타내기
     await Future.delayed(Duration(milliseconds: 750), () {
       setState(() => _showSlogan = true);
@@ -28,12 +28,17 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(Duration(milliseconds: 750), () {
       setState(() => _showCharacter = true);
     });
-    // 타이틀 나타내기
+    // 블러 효과 나타내기
     await Future.delayed(Duration(milliseconds: 750), () {
+      setState(() => _showBlur = true);
+    });
+    // 타이틀 나타내기
+    await Future.delayed(Duration(milliseconds: 750*2), () {
       setState(() => _showTitle = true);
     });
 
-    await Future.delayed(Duration(milliseconds: 750 * 3));
+    // 모든 요소가 보여진 후 더 오래 대기
+    await Future.delayed(Duration(milliseconds: 750 * 4));
 
     // SplashScreen이 Widget Tree에 Mounted 되어있을 때만 온보딩 화면으로 Navigate
     if(!mounted) return;
@@ -77,10 +82,21 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: _slogan(),
                 ),
                 SizedBox(height: 40),
-                AnimatedOpacity(
-                  opacity: _showCharacter ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 750),
-                  child: _character(),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedOpacity(
+                      opacity: _showBlur ? 1.0 : 0.0,
+                      duration: Duration(milliseconds: 750),
+                      curve: Curves.easeInOutCubic,
+                      child: _blur(),
+                    ),
+                    AnimatedOpacity(
+                      opacity: _showCharacter ? 1.0 : 0.0,
+                      duration: Duration(milliseconds: 750),
+                      child: _character(),
+                    ),
+                  ],
                 ),
                 AnimatedOpacity(
                   opacity: _showTitle ? 1.0 : 0.0,
@@ -142,28 +158,27 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  Stack _character() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 175,
-          height: 175,
-          margin: EdgeInsets.only(bottom: 25),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x80FFDE9F),// 노란빛 후광
-                blurRadius: 30,
-                spreadRadius: 10,
-              ),
-            ],
+  Image _character() {
+    return Image.asset('assets/images/character_with_cushion.png', height: 175);
+  }
+
+  Widget _blur() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 2000),
+      curve: Curves.easeInOutCubic,
+      width: _showBlur ? 175 : 0,
+      height: _showBlur ? 175 : 0,
+      margin: EdgeInsets.only(bottom: 25),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x80FFDE9F),
+            blurRadius: _showBlur ? 30 : 0,
+            spreadRadius: _showBlur ? 10 : 0,
           ),
-        ),
-        // 방석 아이콘 (width < height 이므로, height만 설정)
-        Image.asset('assets/images/character_with_cushion.png', height: 175),
-      ],
+        ],
+      ),
     );
   }
 

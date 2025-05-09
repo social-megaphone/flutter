@@ -16,43 +16,49 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 60),
-        // 방석 아이콘 (width < height 이므로, height만 설정)
-        Image.asset('assets/images/character_with_cushion.png', height: 175),
-        SizedBox(height: 12),
-        // 메인 텍스트
-        Onboarding.onboardingScreenMainTextContainer(
-          '우와~ 정말 멋진 목표인걸요?\n\n하루잇에서 시도해보고 싶은\n목표 태그를 골라주세요.'
-        ),
-        SizedBox(height: 20),
-        // 선택 가능권
-        Container(
-          margin: EdgeInsets.symmetric(
-            horizontal: 40,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 32,
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: 50),
+          // 방석 아이콘 (width < height 이므로, height만 설정)
+          Image.asset('assets/images/character_with_cushion.png', height: 160),
+          SizedBox(height: 10),
+          // 메인 텍스트
+          Onboarding.onboardingScreenMainTextContainer(
+            '우와, 정말 멋진 목표인걸요?\n\n하루잇에서 시도해보고 싶은\n목표 태그를 골라주세요.'
           ),
-          child: GridView.count(
-            crossAxisCount: 3, // 3열
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 5/3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildGridItem('건강'),
-              _buildGridItem('생활습관'),
-              _buildGridItem('감정돌봄'),
-              _buildGridItem('진로'),
-              _buildGridItem('배움'),
-              _buildGridItem('자기계발'),
-              _buildGridItem('독서'),
-              _buildGridItem('용기'),
-              _buildGridItem('대인관계'),
-            ],
+          SizedBox(height: 16),
+          // 선택 가능권
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: GridView.count(
+                crossAxisCount: 3, // 3열
+                mainAxisSpacing: 16, // 간격 늘림
+                crossAxisSpacing: 20, // 간격 늘림
+                childAspectRatio: 1.6/1, // 버튼 비율 원복
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildGridItem('생활리듬'),
+                  _buildGridItem('건강/운동'),
+                  _buildGridItem('감정돌봄'),
+                  _buildGridItem('자기이해'),
+                  _buildGridItem('대인관계'),
+                  _buildGridItem('취미탐색'),
+                  _buildGridItem('진로탐색'),
+                  _buildGridItem('자기계발'),
+                  _buildGridItem('일상관찰'),
+                  _buildGridItem('용기실천'),
+                  _buildGridItem('기록/표현'),
+                  _buildGridItem('기타'),
+                ],
+              ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -93,10 +99,11 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
           child: Text(
             tagName,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14, // 폰트 크기 원복
               fontWeight: FontWeight.w500,
               color: isSelected ? Colors.white : Colors.black, // 글자색도 반전
             ),
+            textAlign: TextAlign.center, // 텍스트 중앙 정렬
           ),
         ),
       ),

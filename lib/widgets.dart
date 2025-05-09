@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inner_shadow/flutter_inner_shadow.dart';
 
 // 색상 설정하는 곳
 class CustomColors {
@@ -10,42 +11,57 @@ class CustomColors {
 
 // 온보딩 스크린 관련 위젯
 class Onboarding {
-  static Container onboardingScreenMainTextContainer(String onboardingScreenMainText) {
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: 20,
-      ),
-      padding: EdgeInsets.symmetric(
-        vertical: 20,
-        horizontal: 40,
-      ),
-      decoration: BoxDecoration(
-        color: Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-            blurRadius: 20, // 퍼짐 정도
-            spreadRadius: 0, // 그림자 크기 확장 없음
-            offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-            blurRadius: 20, // 퍼짐 정도
-            spreadRadius: 0, // 그림자 크기 확장 없음
-            offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-          ),
-        ],
-      ),
-      child: Text(
-        onboardingScreenMainText,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF121212),
-          height: 1.5, // 줄 간격 조금 띄우기
+  static InnerShadow onboardingScreenMainTextContainer(String onboardingScreenMainText) {
+    return InnerShadow(
+      shadows: [
+        Shadow(
+          color: Colors.grey,
+          blurRadius: 4,
+          offset: Offset(0, 2),
         ),
-        textAlign: TextAlign.center,
+      ],
+      child: Container(
+        // 최대 넓이로 설정
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          vertical: 20,
+          horizontal: 40,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          // 움푹 들어간 효과를 주는 그라데이션 테두리
+          border: Border.all(
+            color: Colors.transparent,
+          ),
+          // 내부에 그림자 효과를 주는 박스 데코레이션
+          boxShadow: [
+            // 상단 그림자 (진함)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              spreadRadius: 1,
+              offset: Offset(0, 2),
+            ),
+            // 전체적인 안쪽 그림자
+            BoxShadow(
+              color: Colors.white.withOpacity(0.9),
+              blurRadius: 0,
+              spreadRadius: -1,
+              offset: Offset(0, 0),
+            ),
+          ],
+        ),
+        child: Text(
+          onboardingScreenMainText,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF121212),
+            height: 1.5, // 줄 간격 조금 띄우기
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

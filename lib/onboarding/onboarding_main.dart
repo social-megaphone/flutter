@@ -83,21 +83,19 @@ class _OnboardingMainState extends State<OnboardingMain> {
           ..._shuffledPetals,
           // 화면 전환 부분
           SafeArea(
-            child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 1000), // 전환 애니메이션 속도
-                child: _buildOnboardingPages()[_currentPage],
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-              ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500), // 전환 애니메이션 속도
+              child: _buildOnboardingPages()[_currentPage],
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
             ),
           ),
           if(_currentPage != _buildOnboardingPages().length - 1)...[
             // 화면 넘기는 버튼
             Positioned(
-              left: 40,
-              right: 40,
+              left: 32,
+              right: 32,
               bottom: 40, // 40이나 넣는 이유는, SafeArea 밖이라 그래.
               child: GestureDetector(
                 onTap: _isNextEnabled ? () {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_inner_shadow/flutter_inner_shadow.dart';
 import '../routine/routine_screen_one.dart';
+import 'dart:async';
 
 class OnboardingScreenFour extends StatefulWidget {
   const OnboardingScreenFour({super.key, required this.dayCount, required this.selectedTag});
@@ -13,6 +14,8 @@ class OnboardingScreenFour extends StatefulWidget {
 }
 
 class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
+  bool _showInitialText = true;
+  Timer? _textChangeTimer;
 
   List<List<String>> suggestedRoutine = [
     ['아침 물 한 잔 마시기', 'assets/images/suggested_routine/drink_water.png', '매일 일어나자마자 물 한 잔을 마시며 상쾌한 아침을 시작해요'],
@@ -28,6 +31,22 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _textChangeTimer = Timer(const Duration(seconds: 3), () {
+      setState(() {
+        _showInitialText = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _textChangeTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -36,87 +55,119 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
         Image.asset('assets/images/character_with_cushion.png', height: 175),
         SizedBox(height: 12),
         // 메인 텍스트
-        Container(
-          margin: EdgeInsets.symmetric(
-            horizontal: 20,
-          ),
-          padding: EdgeInsets.symmetric(
-            vertical: 20,
-            horizontal: 40,
-          ),
-          decoration: BoxDecoration(
-            color: Color(0xFFFAFAFA),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                blurRadius: 20, // 퍼짐 정도
-                spreadRadius: 0, // 그림자 크기 확장 없음
-                offset: Offset(0, 8), // 아래쪽으로 살짝 이동
+        InnerShadow(
+          shadows: [
+            Shadow(
+              color: Colors.grey,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+          child: Container(
+            width: double.infinity,
+            margin: EdgeInsets.symmetric(
+              horizontal: 32,
+            ),
+            padding: EdgeInsets.symmetric(
+              vertical: 20,
+              horizontal: 20,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.transparent,
               ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                blurRadius: 20, // 퍼짐 정도
-                spreadRadius: 0, // 그림자 크기 확장 없음
-                offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-              ),
-            ],
-          ),
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: '${widget.dayCount}일',
-                  style: TextStyle(
-                    color: Color(0xFF8C7154),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 5,
+                  spreadRadius: 1,
+                  offset: Offset(0, 2),
                 ),
-                TextSpan(
-                  text: ' 뒤, 건강한 사람이 되고 싶은\n',
-                ),
-                TextSpan(
-                  text: '활발한 거북이님',
-                  style: TextStyle(
-                    color: Color(0xFF8C7154),
-                  ),
-                ),
-                TextSpan(
-                  text: '에게 도움이 될\n',
-                ),
-                TextSpan(
-                  text: widget.selectedTag,
-                  style: TextStyle(
-                    color: Color(0xFF8C7154),
-                  ),
-                ),
-                TextSpan(
-                  text: ' 루틴을 추천할게요.',
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.9),
+                  blurRadius: 0,
+                  spreadRadius: -1,
+                  offset: Offset(0, 0),
                 ),
               ],
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF121212),
-                height: 1.5, // 줄 간격 조금 띄우기
-              ),
             ),
-            textAlign: TextAlign.center,
+            child: _showInitialText
+                ? Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${widget.dayCount}일',
+                          style: TextStyle(
+                            color: Color(0xFF8C7154),
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' 뒤, 건강한 사람이 되고 싶은\n',
+                        ),
+                        TextSpan(
+                          text: '활발한 거북이님',
+                          style: TextStyle(
+                            color: Color(0xFF8C7154),
+                          ),
+                        ),
+                        TextSpan(
+                          text: '에게 도움이 될\n',
+                        ),
+                        TextSpan(
+                          text: widget.selectedTag,
+                          style: TextStyle(
+                            color: Color(0xFF8C7154),
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' 루틴을 추천할게요.',
+                        ),
+                      ],
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121212),
+                        height: 1.5, // 줄 간격 조금 띄우기
+                      ),
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+                : Column(
+                    children: [
+                      Text(
+                        '가장 해보고 싶은 루틴을\n1개 선택해볼까요?',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF121212),
+                          height: 1.5, // 줄 간격 조금 띄우기
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '루틴을 누르면 자세한 설명을 볼 수 있어요.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF828282),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
           ),
         ),
         SizedBox(height: 20),
         // 추천 루틴
         Container(
-          height: 370,
+          height: 360,
           decoration: BoxDecoration(
             color: Color(0xFFFFF7DC),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                blurRadius: 20, // 퍼짐 정도
-                spreadRadius: 0, // 그림자 크기 확장 없음
-                offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-              ),
               BoxShadow(
                 color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
                 blurRadius: 20, // 퍼짐 정도
@@ -128,7 +179,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                SizedBox(height: 12),
+                SizedBox(height: 24),
                 // 추천 루틴
                 Container(
                   margin: EdgeInsets.symmetric(
@@ -156,7 +207,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                 // 추천 루틴 목록
                 Container(
                   margin: EdgeInsets.symmetric(
-                    horizontal: 40,
+                    horizontal: 32,
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
@@ -313,7 +364,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                             child: child,
                           );
                         },
-                        transitionDuration: const Duration(milliseconds: 1000),
+                        transitionDuration: const Duration(milliseconds: 500),
                       ),
                     );
                   },

@@ -23,9 +23,6 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
   // '보여질 포스트들'의 정보를 담은 리스트
   List<List<String>> postInfoList = [];
 
-  final PageController _pageController = PageController(viewportFraction: 1);
-  int currentPageIndex = 0;
-
   @override
   void initState() {
     super.initState();
@@ -82,9 +79,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
             SizedBox(height: 24),
             // 태그
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16,
-              ),
+              padding: EdgeInsets.only(left: 16),
               child: SizedBox(
                 height: 36,
                 child: ListView.separated(
