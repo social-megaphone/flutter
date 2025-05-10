@@ -139,419 +139,436 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFFFF7DC),
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          // 꽃 떨어지는 부분
-          ...List.generate(45, (index) => FallingPetal(
-            indexForPositionX: index % 5,
-            fallDelay: Duration(milliseconds: 500 * index),
-            //fallDelay: _fallDelay(index),
-          )),
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 32,
-              ),
-              child: Column(
-                children: [
-                  SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '내 첫 루틴을\n시작 해볼까요?',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF7A634B),
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      // 방석 아이콘 (width < height 이므로, height만 설정)
-                      Column(
-                        children: [
-                          SizedBox(height: 12),
-                          Image.asset('assets/images/character_with_cushion.png', height: 130),
-                        ],
-                      ), 
-                    ],
-                  ),
-                  SizedBox(height: 20), // 텍스트와 이미지 간 간격
-                  InnerShadow(
-                    shadows: [
-                      Shadow(
-                        color: Colors.grey,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(
-                        vertical: 20,
-                        horizontal: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFAFAFA),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                            blurRadius: 20, // 퍼짐 정도
-                            spreadRadius: 0, // 그림자 크기 확장 없음
-                            offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-                          ),
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                            blurRadius: 20, // 퍼짐 정도
-                            spreadRadius: 0, // 그림자 크기 확장 없음
-                            offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            // 0번째 -> routine name
-                            widget.genesisRoutine[0],
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF121212),
-                              height: 1.5, // 줄 간격 조금 띄우기
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            // 2번째 -> routine explanation
-                            widget.genesisRoutine[2],
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF121212),
-                              height: 1.5, // 줄 간격 조금 띄우기
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 20),
-                          Container(
-                            width: 100,
-                            padding: EdgeInsets.symmetric(
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFCE9B2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '인증 방법',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF8C7154),
-                                  height: 1.5, // 줄 간격 조금 띄우기
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            '백에서 받아올\n텍스트',
-                            //'물을 마신 컵 또는 잔의 사진을 찍고\n상쾌한 기분에 대한 한 줄 소감을 적어요',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF121212),
-                              height: 1.5, // 줄 간격 조금 띄우기
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20), // 텍스트와 이미지 간 간격
-                  Container(
-                    width: double.infinity,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            // 꽃 떨어지는 부분
+            ...List.generate(45, (index) => FallingPetal(
+              indexForPositionX: index % 5,
+              fallDelay: Duration(milliseconds: 500 * index),
+              //fallDelay: _fallDelay(index),
+            )),
+            // SingleChildScrollView와 AnimatedContainer 추가
+            SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: SafeArea(
+                  child: Padding(
                     padding: EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                          blurRadius: 20, // 퍼짐 정도
-                          spreadRadius: 0, // 그림자 크기 확장 없음
-                          offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                          blurRadius: 20, // 퍼짐 정도
-                          spreadRadius: 0, // 그림자 크기 확장 없음
-                          offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-                        ),
-                      ],
+                      horizontal: 32,
                     ),
                     child: Column(
                       children: [
-                        Text(
-                          '오늘 실천할 순간을\n사진으로 남겨주세요!',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF121212),
-                            height: 1.5, // 줄 간격 조금 띄우기
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: _pickImages,
-                          child: Container(
-                            width: 100,
-                            padding: EdgeInsets.symmetric(
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFCE9B2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '사진 업로드',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF8C7154),
-                                  height: 1.5, // 줄 간격 조금 띄우기
-                                ),
+                        SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '내 첫 루틴을\n시작 해볼까요?',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF7A634B),
                               ),
                             ),
+                            SizedBox(width: 12),
+                            // 방석 아이콘 (width < height 이므로, height만 설정)
+                            Column(
+                              children: [
+                                SizedBox(height: 12),
+                                Image.asset('assets/images/character_with_cushion.png', height: 130),
+                              ],
+                            ), 
+                          ],
+                        ),
+                        SizedBox(height: 20), // 텍스트와 이미지 간 간격
+                        InnerShadow(
+                          shadows: [
+                            Shadow(
+                              color: Colors.grey,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              vertical: 20,
+                              horizontal: 20,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Color(0xFFFAFAFA),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                                  blurRadius: 20, // 퍼짐 정도
+                                  spreadRadius: 0, // 그림자 크기 확장 없음
+                                  offset: Offset(0, 8), // 아래쪽으로 살짝 이동
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                                  blurRadius: 20, // 퍼짐 정도
+                                  spreadRadius: 0, // 그림자 크기 확장 없음
+                                  offset: Offset(0, -8), // 아래쪽으로 살짝 이동
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  // 2번째 + 3번째 -> routine name
+                                  '${widget.genesisRoutine[2]} ${widget.genesisRoutine[3]}',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF121212),
+                                    height: 1.5, // 줄 간격 조금 띄우기
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  // 4번째 -> routine explanation
+                                  widget.genesisRoutine[4],
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF121212),
+                                    height: 1.5, // 줄 간격 조금 띄우기
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 20),
+                                Container(
+                                  width: 100,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFCE9B2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '인증 방법',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF8C7154),
+                                        height: 1.5, // 줄 간격 조금 띄우기
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  '백에서 받아올\n텍스트',
+                                  //'물을 마신 컵 또는 잔의 사진을 찍고\n상쾌한 기분에 대한 한 줄 소감을 적어요',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF121212),
+                                    height: 1.5, // 줄 간격 조금 띄우기
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        if (_selectedImageFiles.isNotEmpty) ...[
-                          SizedBox(height: 16),
-                          Container(
-                            height: 100,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _selectedImageFiles.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(
-                                      _selectedImageFiles[index],
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        print('이미지 로드 오류: $error');
-                                        return Container(
-                                          width: 100,
-                                          height: 100,
-                                          color: Colors.grey[300],
-                                          child: Icon(Icons.broken_image, color: Colors.grey[600]),
-                                        );
-                                      },
+                        SizedBox(height: 20), // 텍스트와 이미지 간 간격
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFAFAFA),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                                blurRadius: 20, // 퍼짐 정도
+                                spreadRadius: 0, // 그림자 크기 확장 없음
+                                offset: Offset(0, 8), // 아래쪽으로 살짝 이동
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                                blurRadius: 20, // 퍼짐 정도
+                                spreadRadius: 0, // 그림자 크기 확장 없음
+                                offset: Offset(0, -8), // 아래쪽으로 살짝 이동
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '오늘 실천할 순간을\n사진으로 남겨볼까요?',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF828282),
+                                  height: 1.5, // 줄 간격 조금 띄우기
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 12),
+                              GestureDetector(
+                                onTap: _pickImages,
+                                child: Container(
+                                  width: 100,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFCE9B2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '사진 업로드',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF8C7154),
+                                        height: 1.5, // 줄 간격 조금 띄우기
+                                      ),
                                     ),
+                                  ),
+                                ),
+                              ),
+                              if (_selectedImageFiles.isNotEmpty) ...[
+                                SizedBox(height: 16),
+                                Container(
+                                  height: 100,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _selectedImageFiles.length,
+                                    itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 8.0),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.file(
+                                            _selectedImageFiles[index],
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              print('이미지 로드 오류: $error');
+                                              return Container(
+                                                width: 100,
+                                                height: 100,
+                                                color: Colors.grey[300],
+                                                child: Icon(Icons.broken_image, color: Colors.grey[600]),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  '${_selectedImageFiles.length}장의 사진이 선택되었습니다',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF8C7154),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20), // 텍스트와 이미지 간 간격
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFAFAFA),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                                blurRadius: 20, // 퍼짐 정도
+                                spreadRadius: 0, // 그림자 크기 확장 없음
+                                offset: Offset(0, 8), // 아래쪽으로 살짝 이동
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                                blurRadius: 20, // 퍼짐 정도
+                                spreadRadius: 0, // 그림자 크기 확장 없음
+                                offset: Offset(0, -8), // 아래쪽으로 살짝 이동
+                              ),
+                            ],
+                          ),
+                          child: TextFormField(
+                            controller: _reflectionController,
+                            decoration: InputDecoration(
+                              hintText: '실천 후 소감을 솔직하게 적어봐요',
+                              hintStyle: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF828282),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                              border: InputBorder.none,
+                            ),
+                            maxLines: null,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF121212),
+                            ),
+                          ),
+                        ),
+                        // 버튼 위치만큼 아래쪽 여백 추가
+                        SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            
+            // 넘어가는 버튼 (위치 그대로 유지)
+            Positioned(
+              left: 40,
+              right: 40,
+              bottom: 40, // 40이나 넣는 이유는, SafeArea 밖이라 그래.
+              child: GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isDismissible: false,
+                    enableDrag: false,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) {
+                      // 3초 후 자동으로 화면 전환
+                      Timer(Duration(seconds: 3), () async {
+                        Navigator.pop(context); // BottomSheet 닫기
+                        
+                        Navigator.of(context).pushReplacement(
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) => RoutineScreenTwo(),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                            transitionDuration: const Duration(milliseconds: 500),
+                          ),
+                        );
+                      });
+                      
+                      return Container(
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        padding: EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFFFF2CD),
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              '축하해요,\n루틴을 완료했어요!',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF7A634B),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 24),
+                            Image.asset('assets/images/badge_example.png', height: 100),
+                            SizedBox(height: 24),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pushReplacement(
+                                  PageRouteBuilder(
+                                    pageBuilder: (context, animation, secondaryAnimation) => AfterOnboardingMain(
+                                      pageIndex: 2,
+                                    ),
+                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    transitionDuration: const Duration(milliseconds: 1500),
                                   ),
                                 );
                               },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  '뱃지 받기',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF7A634B),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            '${_selectedImageFiles.length}장의 사진이 선택되었습니다',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF8C7154),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10,
                   ),
-                  SizedBox(height: 20), // 텍스트와 이미지 간 간격
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                          blurRadius: 20, // 퍼짐 정도
-                          spreadRadius: 0, // 그림자 크기 확장 없음
-                          offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                          blurRadius: 20, // 퍼짐 정도
-                          spreadRadius: 0, // 그림자 크기 확장 없음
-                          offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-                        ),
-                      ],
-                    ),
-                    child: TextFormField(
-                      controller: _reflectionController,
-                      decoration: InputDecoration(
-                        hintText: '실천 후 소감을 솔직하게 적어봐요',
-                        hintStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF828282),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                        border: InputBorder.none,
-                      ),
-                      maxLines: null,
+                  decoration: BoxDecoration(
+                    color: isButtonEnabled ? Color(0xFF8C7154) : Color(0xFFD6C5B4),
+                    borderRadius: BorderRadius.circular(1000),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '다 했어요!',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF121212),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // 넘어가는 버튼
-          Positioned(
-            left: 40,
-            right: 40,
-            bottom: 40, // 40이나 넣는 이유는, SafeArea 밖이라 그래.
-            child: GestureDetector(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isDismissible: false,
-                  enableDrag: false,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) {
-                    // 3초 후 자동으로 화면 전환
-                    Timer(Duration(seconds: 3), () {
-                      Navigator.pop(context); // BottomSheet 닫기
-                      
-                      Navigator.of(context).pushReplacement(
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => RoutineScreenTwo(),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                          transitionDuration: const Duration(milliseconds: 500),
-                        ),
-                      );
-                    });
-                    
-                    return Container(
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      padding: EdgeInsets.all(24),
-                      decoration: BoxDecoration(
                         color: Color(0xFFFFF2CD),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '축하해요,\n루틴을 완료했어요!',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF7A634B),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 24),
-                          Image.asset('assets/images/badge_example.png', height: 100),
-                          SizedBox(height: 24),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pushReplacement(
-                                PageRouteBuilder(
-                                  pageBuilder: (context, animation, secondaryAnimation) => AfterOnboardingMain(
-                                    pageIndex: 2,
-                                  ),
-                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: child,
-                                    );
-                                  },
-                                  transitionDuration: const Duration(milliseconds: 1500),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 32),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                '뱃지 받기',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF7A634B),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isButtonEnabled ? Color(0xFF8C7154) : Color(0xFFD6C5B4),
-                  borderRadius: BorderRadius.circular(1000),
-                ),
-                child: Center(
-                  child: Text(
-                    '다 했어요!',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFFFF2CD),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

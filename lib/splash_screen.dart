@@ -43,16 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // SplashScreen이 Widget Tree에 Mounted 되어있을 때만 온보딩 화면으로 Navigate
     if(!mounted) return;
     Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const OnboardingMain(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 1500),
-      ),
+      Routing.customPageRouteBuilder(OnboardingMain(), 1000),
     );
   }
 

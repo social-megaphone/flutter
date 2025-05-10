@@ -10,7 +10,7 @@ class LoungeScreenMain extends StatefulWidget {
 
 class _LoungeScreenMainState extends State<LoungeScreenMain> {
 
-  List<String> tagList = ['전체', '생활습관', '감정돌봄', '대인관계', '자기계발'];
+  List<String> tagList = ['전체', '생활습관', '감정돌봄', '대인관계', '자기계발', '작은도전'];
 
   // '전체 포스트들'의 정보를 담은 리스트
   final List<List<String>> _allPostInfoList = [
@@ -18,6 +18,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
     ['감정돌봄', '따뜻한 고양이', '내 감정 한 줄 쓰기'],
     ['대인관계', '활발한 거북이', '아침 물 한 잔 마시기'],
     ['자기계발', '유쾌한 참새', '책 한 쪽 읽기'],
+    ['작은도전', '용감한 토끼', '새로운 길로 출근하기'],
   ];
 
   // '보여질 포스트들'의 정보를 담은 리스트
@@ -79,7 +80,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
             SizedBox(height: 24),
             // 태그
             Padding(
-              padding: EdgeInsets.only(left: 16),
+              padding: EdgeInsets.only(left: 0),
               child: SizedBox(
                 height: 36,
                 child: ListView.separated(
@@ -118,6 +119,26 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
   String selectedTag = '전체';
 
   Widget _buildTag(String tagName) {
+    // 태그에 따른 색상 반환 함수
+    Color getTagColor(String tag) {
+      switch (tag) {
+        case '전체':
+          return const Color(0xFF666666);
+        case '생활습관':
+          return const Color(0xFF7896FF);
+        case '감정돌봄':
+          return const Color(0xFFEA4793);
+        case '대인관계':
+          return const Color(0xFFFF9E28);
+        case '자기계발':
+          return const Color(0xFF68BA5A);
+        case '작은도전':
+          return const Color(0xFFC262D3);
+        default:
+          return const Color(0xFF666666);
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -131,12 +152,13 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
       },
       // 태그 컨테이너
       child: Container(
+        margin: (tagName == '전체') ? EdgeInsets.only(left: 16) : EdgeInsets.zero,
         padding: EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          color: (selectedTag == tagName) ? const Color(0xFF121212) : const Color(0xFFFAFAFA),
+          color: selectedTag == tagName ? getTagColor(tagName) : const Color(0xFFFAFAFA),
           borderRadius: BorderRadius.circular(1000),
           border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
         ),
@@ -157,6 +179,44 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
   Widget _buildPost(List<String> postInfo) {
     PageController pageController = PageController();
     int currentIndex = 0;
+
+    // 태그에 따른 색상 반환 함수 (배경색)
+    Color getTagColor(String tag) {
+      switch (tag) {
+        case '전체':
+          return const Color(0xFF666666);
+        case '생활습관':
+          return const Color(0xFF7896FF);
+        case '감정돌봄':
+          return const Color(0xFFEA4793);
+        case '대인관계':
+          return const Color(0xFFFF9E28);
+        case '자기계발':
+          return const Color(0xFF68BA5A);
+        case '작은도전':
+          return const Color(0xFFC262D3);
+        default:
+          return const Color(0xFF666666);
+      }
+    }
+
+    // 태그에 따른 텍스트 색상 반환 함수
+    Color getTagTextColor(String tag) {
+      switch (tag) {
+        case '생활습관':
+          return const Color(0xFF5F83FF); // 현재 그대로 유지
+        case '대인관계':
+          return const Color(0xFFEA4793); // 요청한 색상
+        case '감정돌봄':
+          return const Color(0xFFD83080); // 진한 핑크
+        case '자기계발':
+          return const Color(0xFF4A9D3D); // 진한 초록
+        case '작은도전':
+          return const Color(0xFFA94CB8); // 진한 보라
+        default:
+          return const Color(0xFF4F4F4F); // 기본 진한 회색
+      }
+    }
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -181,8 +241,9 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
             );
           },
           child: Container(
+            height: 295,
             margin: EdgeInsets.symmetric(
-              horizontal: 20,
+              horizontal: 16,
             ),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -233,14 +294,14 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                           ]
                       ),
                     ),
-                    // 태그
+                    // 태그 - 여기 색상 변경
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0x335F83FF),
+                        color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
                         borderRadius: BorderRadius.circular(1000),
                         border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
                       ),
@@ -249,7 +310,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF5F83FF),
+                          color: getTagTextColor(postInfo[0]), // 태그 텍스트 색상
                         ),
                       ),
                     ),
@@ -259,7 +320,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                 // 사진 (PageView)
                 SizedBox(
                   width: double.infinity,
-                  height: 120,
+                  height: 136,
                   child: PageView.builder(
                     controller: pageController,
                     itemCount: 5,
@@ -322,14 +383,14 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // 루틴 제목
+                    // 루틴 제목 - 여기도 색상 변경
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0x335F83FF),
+                        color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
                         borderRadius: BorderRadius.circular(1000),
                         border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
                       ),
@@ -338,7 +399,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF5F83FF),
+                          color: getTagTextColor(postInfo[0]), // 태그 텍스트 색상
                         ),
                       ),
                     ),

@@ -5,14 +5,23 @@ import '../widgets.dart';
 class OnboardingScreenThree extends StatefulWidget {
   final void Function(bool)? onTagSelectionChanged;
   final void Function(String)? onTagSelected;
+  final String initialSelectedTag;
 
-  const OnboardingScreenThree({super.key, this.onTagSelectionChanged, this.onTagSelected});
+  const OnboardingScreenThree({super.key, this.onTagSelectionChanged, this.onTagSelected, required this.initialSelectedTag});
 
   @override
   State<OnboardingScreenThree> createState() => _OnboardingScreenThreeState();
 }
 
 class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
+
+  @override
+  void initState() {
+    super.initState();
+    if(widget.initialSelectedTag != '' && widget.onTagSelected != null) {
+      selectedTags.add(widget.initialSelectedTag);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -9,6 +9,22 @@ class CustomColors {
   static Color defaultBackgroundColor = Color(0xFFFFF7DC);
 }
 
+// 페이지 넘기는 라우팅 관련 위젯
+class Routing {
+  static customPageRouteBuilder(Widget destinationWidget, int duration) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => destinationWidget,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+      transitionDuration: Duration(milliseconds: duration),
+    );
+  }
+}
+
 // 온보딩 스크린 관련 위젯
 class Onboarding {
   static InnerShadow onboardingScreenMainTextContainer(String onboardingScreenMainText) {

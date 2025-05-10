@@ -17,9 +17,9 @@ class OnboardingMain extends StatefulWidget {
 }
 
 class _OnboardingMainState extends State<OnboardingMain> {
-  int _currentPage = 0; // 현재 페이지 인덱스
+  int _onboardingPageIndex = 0; // 현재 페이지 인덱스
   bool _isNextEnabled = true;
-  int _dayCount = 0; // two에서 고른 day
+  int _dayCount = 1; // two에서 고른 day
   String _selectedTag = '';
 
   late final List<FallingPetal> _shuffledPetals;
@@ -31,9 +31,11 @@ class _OnboardingMainState extends State<OnboardingMain> {
         onDaySelected: (day) {
           setState(() {
             _dayCount = day;
-            _isNextEnabled = day > 0;
           });
         },
+        // 초기 카운트. one에서 two로 갈때는 1로 전달
+        // three에서 two로 갈때는 변한 _dayCount 전달
+        initialDayCount: _dayCount,
       ),
       OnboardingScreenThree(
         onTagSelectionChanged: (isEnabled) {
@@ -46,6 +48,9 @@ class _OnboardingMainState extends State<OnboardingMain> {
             _selectedTag = tag;
           });
         },
+        // 초기 태그. two에서 three로 갈때는 아무것도 전달 X
+        // four에서 three로 갈때는 변한 _selectedTag 전달
+        initialSelectedTag: _selectedTag,
       ),
       OnboardingScreenFour(
         dayCount: _dayCount,
@@ -58,9 +63,10 @@ class _OnboardingMainState extends State<OnboardingMain> {
   void initState() {
     super.initState();
     if(widget.pageIndex != null) {
-      _currentPage = widget.pageIndex!;
+      _onboardingPageIndex = widget.pageIndex!;
     }
 
+    // 꽃잎 관련 코드
     final List<FallingPetal> petals = [];
     for (int cycle = 0; cycle < 4; cycle++) {
       final indices = List<int>.generate(5, (i) => i)..shuffle();
@@ -83,15 +89,42 @@ class _OnboardingMainState extends State<OnboardingMain> {
           ..._shuffledPetals,
           // 화면 전환 부분
           SafeArea(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500), // 전환 애니메이션 속도
-              child: _buildOnboardingPages()[_currentPage],
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
+            child: Stack(
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 1000), // 전환 애니메이션 속도
+                  child: _buildOnboardingPages()[_onboardingPageIndex],
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                ),
+                if(_onboardingPageIndex > 0)...[
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        // 한 페이지 앞으로 돌아옴
+                        _onboardingPageIndex--;
+                        // 앞으로 돌아옴에 따라서, _isNextEnabled 조정.
+                        _isNextEnabled = true;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        top: 12,
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 24,
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if(_currentPage != _buildOnboardingPages().length - 1)...[
+          if(_onboardingPageIndex != _buildOnboardingPages().length - 1)...[
             // 화면 넘기는 버튼
             Positioned(
               left: 32,
@@ -100,15 +133,14 @@ class _OnboardingMainState extends State<OnboardingMain> {
               child: GestureDetector(
                 onTap: _isNextEnabled ? () {
                   setState(() {
-                    _currentPage++;
-                    if (_currentPage == 1) _isNextEnabled = false;
-                    if (_currentPage == 2) _isNextEnabled = false;
+                    _onboardingPageIndex++;
+                    // 무조건 three라고 false를 처리하지 않고, _selectedTag가 없을 때만 false로 처리.
+                    if (_onboardingPageIndex == 2 && _selectedTag == '') _isNextEnabled = false;
                   });
                 } : null,
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 10,
-                  ),
+                  // 왜인지 모르겠지만, Text가 상하 중앙 정렬이 자동으로 되지 않아서, 수동으로 조정함.
+                  padding: EdgeInsets.fromLTRB(0, 9, 0, 11),
                   decoration: BoxDecoration(
                     color: _isNextEnabled ? Color(0xFF8C7154) : Color(0xFFBFAE9C),
                     borderRadius: BorderRadius.circular(1000),
@@ -127,7 +159,8 @@ class _OnboardingMainState extends State<OnboardingMain> {
               ),
             ),
           ],
-          if(_currentPage == 3)...[
+          // 디자인적 오류 방지.
+          if(_onboardingPageIndex == 3)...[
             Positioned(
               left: 0,
               right: 0,

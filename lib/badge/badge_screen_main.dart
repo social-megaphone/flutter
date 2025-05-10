@@ -323,13 +323,18 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                   ),
                 ),
                 child: Center(
-                  child: Text(
-                    levelTitles[currentLevel] ?? '도전자',
-                    style: TextStyle(
-                      color: Color(0xFF8C7154),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 16),
+                      Text(
+                        levelTitles[currentLevel] ?? '도전자',
+                        style: TextStyle(
+                          color: Color(0xFF8C7154),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

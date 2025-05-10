@@ -68,6 +68,11 @@ flutter:
   assets:
     - assets/images/
     - assets/images/suggested_routine/
+    - assets/images/suggested_routine/life_habit/
+    - assets/images/suggested_routine/emotion_control/
+    - assets/images/suggested_routine/human_relationship/
+    - assets/images/suggested_routine/personal_development/
+    - assets/images/suggested_routine/small_trial/
     - assets/images/bottom_nav_icon/
     - assets/images/badge_map/
   #   - images/a_dot_ham.jpeg
