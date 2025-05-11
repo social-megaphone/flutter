@@ -8,9 +8,10 @@ import '../falling_petal.dart';
 import '../widgets.dart';
 
 class OnboardingMain extends StatefulWidget {
-  const OnboardingMain({super.key, this.pageIndex});
+  const OnboardingMain({super.key, this.pageIndex, this.afterOnboarding});
 
   final int? pageIndex;
+  final bool? afterOnboarding;
 
   @override
   State<OnboardingMain> createState() => _OnboardingMainState();
@@ -21,6 +22,8 @@ class _OnboardingMainState extends State<OnboardingMain> {
   bool _isNextEnabled = true;
   int _dayCount = 1; // two에서 고른 day
   String _selectedTag = '';
+  bool isOnboardingDone = false; // 기본적으로 onboarding 과정이라고 생각하고, isOnboardingDone은 false로 설정
+
 
   late final List<FallingPetal> _shuffledPetals;
 
@@ -66,6 +69,11 @@ class _OnboardingMainState extends State<OnboardingMain> {
       _onboardingPageIndex = widget.pageIndex!;
     }
 
+    if(widget.afterOnboarding != null) {
+      isOnboardingDone = widget.afterOnboarding!; // afterOnboaring이 true일 때만, isOnboardingDone도 true로 설정.
+      _isNextEnabled = true;
+    }
+
     // 꽃잎 관련 코드
     final List<FallingPetal> petals = [];
     for (int cycle = 0; cycle < 4; cycle++) {
@@ -92,7 +100,7 @@ class _OnboardingMainState extends State<OnboardingMain> {
             child: Stack(
               children: [
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 1000), // 전환 애니메이션 속도
+                  duration: const Duration(milliseconds: 500), // 전환 애니메이션 속도
                   child: _buildOnboardingPages()[_onboardingPageIndex],
                   transitionBuilder: (Widget child, Animation<double> animation) {
                     return FadeTransition(opacity: animation, child: child);
@@ -101,24 +109,21 @@ class _OnboardingMainState extends State<OnboardingMain> {
                 if(_onboardingPageIndex > 0)...[
                   GestureDetector(
                     onTap: () {
-                      setState(() {
-                        // 한 페이지 앞으로 돌아옴
-                        _onboardingPageIndex--;
-                        // 앞으로 돌아옴에 따라서, _isNextEnabled 조정.
-                        _isNextEnabled = true;
-                      });
+                      // isOnboardingDone 값에 따라서, _onboardingPage == 1의 뒤로가기 버튼의 역할이 달라짐
+                      if(isOnboardingDone == true && _onboardingPageIndex == 1) {
+                        setState(() {
+                          Navigator.of(context).pop();
+                        });
+                      } else {
+                        setState(() {
+                          // 한 페이지 앞으로 돌아옴
+                          _onboardingPageIndex--;
+                          // 앞으로 돌아옴에 따라서, _isNextEnabled 조정.
+                          _isNextEnabled = true;
+                        });
+                      }
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        top: 12,
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new,
-                        size: 24,
-                        color: Color(0xFF000000),
-                      ),
-                    ),
+                    child: Routing.backButton(),
                   ),
                 ],
               ],

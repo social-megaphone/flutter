@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../widgets.dart';
+
 class BadgeScreenMain extends StatefulWidget {
   const BadgeScreenMain({super.key});
 
@@ -88,39 +90,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                 ),
                 Spacer(),
                 // 알림 버튼
-                Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Color(0xFF8C7154),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                            blurRadius: 10, // 퍼짐 정도
-                            spreadRadius: 0, // 그림자 크기 확장 없음
-                            offset: Offset(0, 4), // 아래쪽으로 살짝 이동
-                          ),
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                            blurRadius: 10, // 퍼짐 정도
-                            spreadRadius: 0, // 그림자 크기 확장 없음
-                            offset: Offset(0, -4), // 아래쪽으로 살짝 이동
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.notifications,
-                          size: 24,
-                          color: Color(0xFFFCE9B2),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 32),
-                  ],
-                ),
+                AfterOnboarding.notificationButton(Color(0xFF8C7154)),
               ],
             ),
           ),

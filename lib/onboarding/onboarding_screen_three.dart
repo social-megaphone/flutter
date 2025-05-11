@@ -37,7 +37,7 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
           SizedBox(height: 10),
           // 메인 텍스트
           Onboarding.onboardingScreenMainTextContainer(
-            '우와, 정말 멋진 목표인걸요?\n\n하루잇에서 시도해보고 싶은\n목표 태그를 골라주세요.'
+            '우와, 정말 멋진 걸요?\n\n하루잇에서 시도해보고 싶은\n목표 태그를 골라주세요.'
           ),
           SizedBox(height: 16),
           // 선택 가능권

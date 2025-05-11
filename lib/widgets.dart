@@ -11,7 +11,8 @@ class CustomColors {
 
 // 페이지 넘기는 라우팅 관련 위젯
 class Routing {
-  static customPageRouteBuilder(Widget destinationWidget, int duration) {
+  // 모핑을 곁들인 화면 전환
+  static PageRouteBuilder customPageRouteBuilder(Widget destinationWidget, int duration) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => destinationWidget,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -21,6 +22,21 @@ class Routing {
         );
       },
       transitionDuration: Duration(milliseconds: duration),
+    );
+  }
+
+  // 뒤로가기 버튼의 위치 (부모로는 SafeArea)
+  static Padding backButton() {
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: 16,
+        top: 12,
+      ),
+      child: Icon(
+        Icons.arrow_back_ios_new,
+        size: 24,
+        color: Color(0xFF000000),
+      ),
     );
   }
 }
@@ -79,6 +95,41 @@ class Onboarding {
           textAlign: TextAlign.center,
         ),
       ),
+    );
+  }
+}
+
+class AfterOnboarding {
+  // 내부 padding all 12, 외부 padding horizontal 32 기준, 우측 정렬된 경우 사용할 notificationButton
+  static Column notificationButton(Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: color,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                blurRadius: 10, // 퍼짐 정도
+                spreadRadius: 0, // 그림자 크기 확장 없음
+                offset: Offset(0, 4), // 아래쪽으로 살짝 이동
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
+                blurRadius: 10, // 퍼짐 정도
+                spreadRadius: 0, // 그림자 크기 확장 없음
+                offset: Offset(0, -4), // 아래쪽으로 살짝 이동
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(Icons.notifications, size: 24),
+          ),
+        ),
+        SizedBox(height: 32),
+      ],
     );
   }
 }

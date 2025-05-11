@@ -5,6 +5,7 @@ import '../save/save_screen_main.dart';
 import '../badge/badge_screen_main.dart';
 import '../profile/profile_screen_main.dart';
 import 'onboarding/onboarding_main.dart';
+import 'widgets.dart';
 
 class AfterOnboardingMain extends StatefulWidget {
   const AfterOnboardingMain({super.key, this.pageIndex});
@@ -72,101 +73,65 @@ class _AfterOnboardingMainState extends State<AfterOnboardingMain> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
+                  // 라운지
+                  bottomNavigationButton(0, 'lounge_icon'),
+                  // 저장
+                  bottomNavigationButton(1, 'save_icon'),
+                  // 새 루틴
                   GestureDetector(
+                    // Padding 부분도 터치되게 하는 코드.
+                    behavior: HitTestBehavior.translucent,
                     onTap: () {
-                      setState(() {
-                        _currentPageIndex = 0;
-                      });
-                    },
-                    child: Image.asset(
-                      'assets/images/bottom_nav_icon/lounge_icon.png',
-                      width: 24,
-                      color: (_currentPageIndex == 0) ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        // mvp에서는 비활성화!
-                        //_currentPageIndex = 1;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("현재 기능은 준비 중입니다."),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: Colors.black87,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          margin: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).size.height * 0.075,
-                            left: 16,
-                            right: 16,
-                          ),
+                      Navigator.of(context).push(
+                        Routing.customPageRouteBuilder(
+                          OnboardingMain(pageIndex: 1, afterOnboarding: true),
+                          500,
                         ),
                       );
                     },
-                    child: Image.asset(
-                      'assets/images/bottom_nav_icon/save_icon.png',
-                      width: 24,
-                      color: (_currentPageIndex == 1) ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                  IconButton(
-                    icon: FloatingActionButton(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          PageRouteBuilder(
-                            pageBuilder: (context, animation, secondaryAnimation) => OnboardingMain(
-                              pageIndex: 1,
-                            ),
-                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              );
-                            },
-                            transitionDuration: const Duration(milliseconds: 1500),
-                          ),
-                        );
-                      },
-                      backgroundColor: Color(0xFF8C7154),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(1000),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 12,
                       ),
-                      child: Icon(Icons.add),
-                    ),
-                    onPressed: () {},
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _currentPageIndex = 2;
-                      });
-                    },
-                    child: Image.asset(
-                      'assets/images/bottom_nav_icon/badge_icon.png',
-                      width: 24,
-                      color: (_currentPageIndex == 2) ? Colors.black : Colors.grey,
+                      child: Image.asset(
+                        'assets/images/bottom_nav_icon/routine_add_icon.png',
+                        width: 40,
+                      ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _currentPageIndex = 3;
-                      });
-                    },
-                    child: Image.asset(
-                      'assets/images/bottom_nav_icon/profile_icon.png',
-                      width: 24,
-                      color: (_currentPageIndex == 3) ? Colors.black : Colors.grey,
-                    ),
-                  ),
+                  // 뱃지
+                  bottomNavigationButton(2, 'badge_icon'),
+                  // 프로필
+                  bottomNavigationButton(3, 'profile_icon'),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  GestureDetector bottomNavigationButton(int index, String imageUrl) {
+    return GestureDetector(
+      // Padding 부분도 터치되게 하는 코드.
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        setState(() {
+          _currentPageIndex = index;
+        });
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: 20,
+          horizontal: 12,
+        ),
+        child: Image.asset(
+          'assets/images/bottom_nav_icon/$imageUrl.png',
+          width: 24,
+          color: (_currentPageIndex == index) ? Colors.black : Colors.grey,
+        ),
       ),
     );
   }

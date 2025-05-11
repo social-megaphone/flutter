@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mvp/lounge/lounge_post_screen.dart';
 
+import '../widgets.dart';
+
 class LoungeScreenMain extends StatefulWidget {
   const LoungeScreenMain({super.key});
 
@@ -38,80 +40,57 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
         physics: AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            SizedBox(height: 12),
-            // 제목 및 캐릭터 및 알림 버튼
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 32,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 제목
-                  Text(
-                    '함께하는\n하루잇러들',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF7A634B),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Image.asset('assets/images/character_without_cushion.png', height: 100),
-                  Spacer(),
-                  Column(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFFD9D9D9), width: 1),
-                        ),
-                        child: Center(
-                          child: Icon(Icons.notifications, size: 24),
-                        ),
-                      ),
-                      SizedBox(height: 32),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24),
-            // 태그
-            Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: SizedBox(
-                height: 36,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: tagList.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildTag(tagList[index]);
-                  },
-                  separatorBuilder: (BuildContext context, int index) {
-                    return SizedBox(width: 10);
-                  },
-                ),
-              ),
-            ),
-            SizedBox(height: 24),
-            // 게시물 리스트
-            ListView.separated(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              scrollDirection: Axis.vertical,
-              itemCount: postInfoList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return _buildPost(postInfoList[index]);
-              },
-              separatorBuilder: (BuildContext context, int index) {
-                return SizedBox(height: 24);
-              },
-            ),
+            SizedBox(height: 16),
+            header(), // 제목 및 캐릭터 및 알림 버튼
+            SizedBox(height: 30),
+            tagPart(), // 태그
+            SizedBox(height: 18),
+            postPart(), // 게시물
             SizedBox(height: 80),
           ],
         ),
+      ),
+    );
+  }
+
+  Padding header() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 제목
+          Text(
+            '함께하는\n하루잇러들',
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF7A634B),
+            ),
+          ),
+          SizedBox(width: 12),
+          // 캐릭터
+          Image.asset('assets/images/character_without_cushion.png', height: 80),
+          Spacer(),
+          // 알림 버튼
+          AfterOnboarding.notificationButton(Color(0xFFFFF7DC)),
+        ],
+      ),
+    );
+  }
+
+  SizedBox tagPart() {
+    return SizedBox(
+      height: 33,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: tagList.length,
+        itemBuilder: (BuildContext context, int index) {
+          return _buildTag(tagList[index]);
+        },
+        separatorBuilder: (BuildContext context, int index) {
+          return SizedBox(width: 8);
+        },
       ),
     );
   }
@@ -152,15 +131,19 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
       },
       // 태그 컨테이너
       child: Container(
-        margin: (tagName == '전체') ? EdgeInsets.only(left: 16) : EdgeInsets.zero,
-        padding: EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
+        margin: (tagName == '전체') ? EdgeInsets.only(left: 16, bottom: 4) : (tagName == '작은도전') ? EdgeInsets.only(right: 16, bottom: 4) : EdgeInsets.only(bottom: 4),
+        padding: EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: selectedTag == tagName ? getTagColor(tagName) : const Color(0xFFFAFAFA),
-          borderRadius: BorderRadius.circular(1000),
-          border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
+          color: selectedTag == tagName ? getTagColor(tagName) : const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((0.1 * 255).toInt()), // 아주 연한 그림자
+              blurRadius: 2, // 퍼짐 정도
+              spreadRadius: 0, // 그림자 크기 확장 없음
+              offset: Offset(0, 2), // 아래쪽으로 살짝 이동
+            ),
+          ]
         ),
         child: Center(
           child: Text(
@@ -168,11 +151,26 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: (selectedTag == tagName) ? const Color(0xFFFAFAFA) : const Color(0xFF121212),
+              color: (selectedTag == tagName) ? const Color(0xFFFFFFFF) : const Color(0xFF121212),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  ListView postPart() {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      scrollDirection: Axis.vertical,
+      itemCount: postInfoList.length,
+      itemBuilder: (BuildContext context, int index) {
+        return _buildPost(postInfoList[index]);
+      },
+      separatorBuilder: (BuildContext context, int index) {
+        return SizedBox(height: 24);
+      },
     );
   }
 
@@ -186,7 +184,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
         case '전체':
           return const Color(0xFF666666);
         case '생활습관':
-          return const Color(0xFF7896FF);
+          return const Color(0xFF5F83FF);
         case '감정돌봄':
           return const Color(0xFFEA4793);
         case '대인관계':
@@ -200,27 +198,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
       }
     }
 
-    // 태그에 따른 텍스트 색상 반환 함수
-    Color getTagTextColor(String tag) {
-      switch (tag) {
-        case '생활습관':
-          return const Color(0xFF5F83FF); // 현재 그대로 유지
-        case '대인관계':
-          return const Color(0xFFEA4793); // 요청한 색상
-        case '감정돌봄':
-          return const Color(0xFFD83080); // 진한 핑크
-        case '자기계발':
-          return const Color(0xFF4A9D3D); // 진한 초록
-        case '작은도전':
-          return const Color(0xFFA94CB8); // 진한 보라
-        default:
-          return const Color(0xFF4F4F4F); // 기본 진한 회색
-      }
-    }
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return GestureDetector(
+    return GestureDetector(
           onTap: () {
             Navigator.of(context).push(
               PageRouteBuilder(
@@ -271,46 +249,44 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // '조용한 강아지의 잇루틴'
+                    // '조용한 강아지님의 잇루틴'
                     Text.rich(
                       TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '${postInfo[1]}님',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF8C7154),
-                              ),
+                        children: [
+                          TextSpan(
+                            text: postInfo[1],
+                            style: const TextStyle(
+                              color: Color(0xFF8C7154),
                             ),
-                            TextSpan(
-                              text: '의 잇루틴',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF121212),
-                              ),
-                            ),
-                          ]
+                          ),
+                          TextSpan(
+                            text: '님의 잇루틴',
+                          ),
+                        ]
+                      ),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121212),
                       ),
                     ),
-                    // 태그 - 여기 색상 변경
+                    // 태그
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
+                        horizontal: 7,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
-                        borderRadius: BorderRadius.circular(1000),
-                        border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Color(0xFF8C7154), width: 1),
                       ),
                       child: Text(
                         postInfo[0],
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: getTagTextColor(postInfo[0]), // 태그 텍스트 색상
+                          color: Color(0xFF8C7154),
                         ),
                       ),
                     ),
@@ -386,12 +362,12 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                     // 루틴 제목 - 여기도 색상 변경
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                        horizontal: 12,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
-                        borderRadius: BorderRadius.circular(1000),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
                       ),
                       child: Text(
@@ -399,7 +375,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: getTagTextColor(postInfo[0]), // 태그 텍스트 색상
+                          color: Color(0xFF666666),
                         ),
                       ),
                     ),
@@ -426,7 +402,5 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
             ),
           ),
         );
-      },
-    );
   }
 }
