@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inner_shadow/flutter_inner_shadow.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart'; // 키보드 관련 패키지
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import '../after_onboarding_main.dart';
 import '../falling_petal.dart';
@@ -29,6 +33,11 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   bool? applyAutoMove = false; // 자동으로 routine_screen_two로 이동할지 여부
   Timer? _autoMoveTimer; // 타이머 변수 추가
 
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _textFieldKey = GlobalKey();
+  late final KeyboardVisibilityController _keyboardVisibilityController;
+  late final StreamSubscription<bool> _keyboardSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -38,12 +47,23 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
         isButtonEnabled = _reflectionController.text.trim().isNotEmpty || _selectedImageFiles.isNotEmpty;
       });
     });
+    _keyboardVisibilityController = KeyboardVisibilityController();
+    _keyboardSubscription = _keyboardVisibilityController.onChange.listen((visible) {
+      if (visible) {
+        // 키보드가 올라오면 TextFormField 위치로 스크롤
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToTextField();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _autoMoveTimer?.cancel(); // 타이머 정리
     _reflectionController.dispose();
+    _keyboardSubscription.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -140,6 +160,113 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     }
   }
 
+  // 왜 이게 잘 작동이 안되나...?
+  void _scrollToTextField() {
+    final RenderBox? renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final position = renderBox.localToGlobal(Offset.zero);
+      final textFieldBottom = position.dy + renderBox.size.height;
+      final screenHeight = MediaQuery.of(context).size.height;
+      final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+      // 키보드가 올라온 상태에서 TextFormField의 하단이 키보드 위 20px에 오도록 스크롤
+      final overlap = textFieldBottom - (screenHeight - keyboardHeight) + 20;
+      if (overlap > 0) {
+        _scrollController.animateTo(
+          _scrollController.offset + overlap,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
+  final fsStorage = FlutterSecureStorage();
+
+  // 유저 가입시키는 part
+  Future<void> registerUser() async {
+
+    print('registerUser 시작');
+
+    // 과거의 데이터 불러오는 부분
+    final nickname = await fsStorage.read(key: 'randomName');
+    print('nickname 가져오기: $nickname');
+    final goalDateString = await fsStorage.read(key: 'goalDate') ?? "1";
+    int goalDate = int.parse(goalDateString);
+    print('goalDate 가져오기: $goalDate');
+    final routineTag = await fsStorage.read(key: 'tag');
+    print('routineTag 가져오기: $routineTag');
+    final routineName = await fsStorage.read(key: 'routineName');
+    print('routineName 가져오기: $routineName');
+    String routineId = "";
+
+    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine?$routineTag');
+    final fetchResponse = await http.get(fetchUri);
+
+
+
+    if(fetchResponse.statusCode == 200) {
+      print('fetchResponse.statusCode is 200');
+      final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
+      for(var routine in jsonData) {
+        print("routine['title']은 ${routine['title']}");
+        if(routine['title'] == routineName) {
+          print('routineName은 $routineName');
+          routineId = routine['_id']["\$oid"];
+          print('그래서 routineId는 $routineId');
+        }
+      }
+    }
+
+    // 에러났을 때 왜 에러났나 보게
+    print('fetchResponse.statusCode: ${fetchResponse.statusCode}');
+
+    // 이를 DB에 가입시키는 부분
+    final uri = Uri.parse('https://haruitfront.vercel.app/api/auth/initial');
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "nickname": nickname,
+        "goalDate": goalDate,
+        "routine": {
+          "id": routineId,
+        },
+        "reflection": "",
+        "imgSrc": "https://i.imgur.com/Ot5DWAW.png"
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+
+      print('responseData: $responseData');
+
+      // 회원가입 성공 메시지 출력
+      print('회원가입 성공: ${responseData["message"]}');
+      // JWT Token 출력
+      print('JWT Token: ${responseData["JWT_TOKEN"]}');
+      // JWT_TOKEN 저장하는 부분
+      fsStorage.write(key: 'jwt_token', value: '${responseData["JWT_TOKEN"]}');
+      final saved = fsStorage.read(key: 'jwt_token');
+      print('jwt_token of user is saved as $saved');
+    } else {
+      print('회원가입 실패: ${response.statusCode}');
+      print('response.body: ${response.body}');
+    }
+
+    print('registerUser 끝');
+  }
+
+  Future<void> storeSogam(String sogam) async {
+    await fsStorage.write(key: 'sogam', value: _reflectionController.text.trim());
+    final saved = await fsStorage.read(key: 'sogam');
+    print('소감 저장됨: $saved');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,6 +284,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
               fallDelay: Duration(milliseconds: 500 * index),
             )),
             SingleChildScrollView(
+              controller: _scrollController,
               child: SafeArea(
                 child: Stack(
                   children: [
@@ -346,7 +474,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
       child: Column(
         children: [
           Text(
-            '오늘 실천할 순간을\n사진으로 남겨볼까요?',
+            '오늘 실천한 순간을\n사진으로 남겨볼까요?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -390,23 +518,50 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        _selectedImageFiles[index],
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          print('이미지 로드 오류: $error');
-                          return Container(
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            _selectedImageFiles[index],
                             width: 100,
                             height: 100,
-                            color: Colors.grey[300],
-                            child: Icon(Icons.broken_image, color: Colors.grey[600]),
-                          );
-                        },
-                      ),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              print('이미지 로드 오류: $error');
+                              return Container(
+                                width: 100,
+                                height: 100,
+                                color: Colors.grey[300],
+                                child: Icon(Icons.broken_image, color: Colors.grey[600]),
+                              );
+                            },
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedImageFiles.removeAt(index);
+                                isButtonEnabled = _reflectionController.text.trim().isNotEmpty || _selectedImageFiles.isNotEmpty;
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -470,6 +625,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
           fontWeight: FontWeight.w700,
           color: Color(0xFF121212),
         ),
+        key: _textFieldKey,
       ),
     );
   }
@@ -522,10 +678,17 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                     Image.asset('assets/images/badge_example.png', height: 100),
                     SizedBox(height: 32),
                     GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         // 타이머 취소
                         _autoMoveTimer?.cancel();
                         Navigator.of(parentContext).pop();
+
+                        // TextFormField 내용 저장
+                        await storeSogam(_reflectionController.text.trim());
+
+                        // 유저 등록인데, 아직은 제껴놓자.
+                        // await registerUser();
+
                         Navigator.of(parentContext).pushReplacement(
                           Routing.customPageRouteBuilder(AfterOnboardingMain(pageIndex: 2), 500),
                         );

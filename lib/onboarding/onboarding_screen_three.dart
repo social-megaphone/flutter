@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../widgets.dart';
 
@@ -73,6 +74,14 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
 
   List<String> selectedTags = []; // 선택된 태그들 저장
 
+  final fsStorage = FlutterSecureStorage();
+
+  Future<void> storeTag(List<String> selectedTags) async {
+    await fsStorage.write(key: 'tag', value: selectedTags[0]);
+    final saved = await fsStorage.read(key: 'tag');
+    print('태그 저장여부: $saved');
+  }
+
   Widget _buildGridItem(String tagName) {
     final bool isSelected = selectedTags.contains(tagName);
 
@@ -86,6 +95,7 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
               ..clear()
               ..add(tagName); // 하나만 선택되도록
           }
+          storeTag(selectedTags);
           widget.onTagSelectionChanged?.call(selectedTags.isNotEmpty);
           if (!isSelected) {
             widget.onTagSelected?.call(tagName);

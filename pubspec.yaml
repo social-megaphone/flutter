@@ -42,6 +42,13 @@ dependencies:
   permission_handler: ^11.1.0
   path_provider: ^2.1.1
 
+  # 네트워크 통신 패키지
+  http: ^1.1.0
+
+  # 키보드 관련 패키지
+  flutter_keyboard_visibility: ^5.1.0
+  flutter_secure_storage: ^9.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

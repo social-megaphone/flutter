@@ -367,7 +367,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
           SizedBox(height: 8),
           // 소감
           Text(
-            '깔끔하고 깨끗해진 내 책상을 보니 뿌듯해요.\n다음에는 내 방 청소에 도전해볼게요!',
+            widget.postInfo[3],
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,

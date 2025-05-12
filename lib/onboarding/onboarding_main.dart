@@ -29,7 +29,9 @@ class _OnboardingMainState extends State<OnboardingMain> {
 
   List<Widget> _buildOnboardingPages() {
     return [
-      OnboardingScreenOne(),
+      OnboardingScreenOne(
+
+      ),
       OnboardingScreenTwo(
         onDaySelected: (day) {
           setState(() {

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'onboarding/onboarding_main.dart';
+import 'after_onboarding_main.dart';
 import 'widgets.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -11,6 +15,48 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
+  // FlutterSecureStorage 인스턴스 생성
+  final fsStorage = FlutterSecureStorage();
+
+  Future<bool> checkIfReturningUser() async {
+    // jwt_token이 있는 지 체크
+    final token = await fsStorage.read(key: 'jwt_token');
+
+    if (token == null) {
+      // token이 없을 때 == 신규 사용자 일 때
+      print('jwt_token is null. this user is new user');
+      return false;
+    }
+
+    // token이 있을 때 == 기존 사용자 일 때
+    print('jwt_token is not null. this user is returning user');
+    print('jwt_token: $token');
+
+    // /api/auth/mypage로 접근
+    final uri = Uri.parse('https://haruitfront.vercel.app/api/auth/mypage');
+
+    // /api/auth/mypage에 GET 요청 보냄 with [header]
+    // [header]는 $token을 갖고 있음.
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // response를 잘 받아 왔을 때,
+      final data = jsonDecode(response.body);
+      print('기존 사용자 확인됨: ${data["data"]["nickname"]}');
+      return true;
+    } else {
+      // 그렇지 못 했을 때
+      print('토큰 인증 실패 (status: ${response.statusCode}) → 신규 사용자로 간주');
+      return false;
+    }
+  }
 
   // Slogan, Character, Blur, Title을 보여줄 지 결정하는 boolean 변수 4개
   bool _showSlogan = false;
@@ -40,10 +86,15 @@ class _SplashScreenState extends State<SplashScreen> {
     // 모든 요소가 보여진 후 더 오래 대기
     await Future.delayed(Duration(milliseconds: 750 * 4));
 
+    final isReturningUser = await checkIfReturningUser();
+
     // SplashScreen이 Widget Tree에 Mounted 되어있을 때만 온보딩 화면으로 Navigate
     if(!mounted) return;
     Navigator.of(context).pushReplacement(
-      Routing.customPageRouteBuilder(OnboardingMain(), 1000),
+      Routing.customPageRouteBuilder(
+        isReturningUser ? AfterOnboardingMain() : OnboardingMain(),
+        1000,
+      ),
     );
   }
 

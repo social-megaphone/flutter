@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mvp/lounge/lounge_post_screen.dart';
 
 import '../widgets.dart';
@@ -16,11 +17,11 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
 
   // '전체 포스트들'의 정보를 담은 리스트
   final List<List<String>> _allPostInfoList = [
-    ['생활습관', '조용한 강아지', '침대 정리하기'],
-    ['감정돌봄', '따뜻한 고양이', '내 감정 한 줄 쓰기'],
-    ['대인관계', '활발한 거북이', '아침 물 한 잔 마시기'],
-    ['자기계발', '유쾌한 참새', '책 한 쪽 읽기'],
-    ['작은도전', '용감한 토끼', '새로운 길로 출근하기'],
+    ['생활습관', '조용한 강아지', '침대 정리하기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
+    ['감정돌봄', '따뜻한 고양이', '내 감정 한 줄 쓰기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
+    ['대인관계', '활발한 거북이', '아침 물 한 잔 마시기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
+    ['자기계발', '유쾌한 참새', '책 한 쪽 읽기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
+    ['작은도전', '용감한 토끼', '새로운 길로 출근하기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
   ];
 
   // '보여질 포스트들'의 정보를 담은 리스트
@@ -30,6 +31,24 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
   void initState() {
     super.initState();
     postInfoList = List.from(_allPostInfoList);
+    final storage = FlutterSecureStorage();
+
+    Future<void> loadStoredPost() async {
+      final tag = await storage.read(key: 'tag');
+      final randomName = await storage.read(key: 'randomName');
+      final routineName = await storage.read(key: 'routineName');
+      final sogam = await storage.read(key: 'sogam');
+
+      if (tag != null && randomName != null && routineName != null && sogam != null) {
+        final newPost = [tag, randomName, routineName, sogam];
+        setState(() {
+          _allPostInfoList.insert(0, newPost);
+          postInfoList = List.from(_allPostInfoList);
+        });
+      }
+    }
+
+    loadStoredPost();
   }
 
   @override
@@ -390,7 +409,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                 const SizedBox(height: 8),
                 // 소감
                 Text(
-                  '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.',
+                  postInfo[3],
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

@@ -174,7 +174,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '5일 연속\n도전 중',
+                        '1일 연속\n도전 중',
                         style: TextStyle(
                           fontSize: 25,
                           fontWeight: FontWeight.w700,
@@ -184,7 +184,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                       ),
                       SizedBox(height: 8),
                       LinearProgressIndicator(
-                        value: 2/7, // 예시로 5/7 진행
+                        value: 1/7, // 예시로 1/7 진행
                         backgroundColor: Colors.grey[300],
                         color: Color(0xFFD27CEE),
                         minHeight: 12,
