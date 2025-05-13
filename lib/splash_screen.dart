@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<bool> checkIfReturningUser() async {
     // jwt_token이 있는 지 체크
-    final token = await fsStorage.read(key: 'jwt_token');
+    final String? token = await fsStorage.read(key: 'jwt_token');
 
     if (token == null) {
       // token이 없을 때 == 신규 사용자 일 때
@@ -42,8 +42,8 @@ class _SplashScreenState extends State<SplashScreen> {
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+        'Authorization': 'Bearer $token'
+      }
     );
 
     if (response.statusCode == 200) {
@@ -127,12 +127,18 @@ class _SplashScreenState extends State<SplashScreen> {
                 Stack(
                   alignment: Alignment.center,
                   children: [
+                    Opacity(
+                      opacity: _showBlur ? 1.0 : 0.0,
+                      child: _blur(),
+                    ),
+                    /*
                     AnimatedOpacity(
                       opacity: _showBlur ? 1.0 : 0.0,
                       duration: Duration(milliseconds: 750),
                       curve: Curves.easeInOutCubic,
                       child: _blur(),
                     ),
+                    */
                     AnimatedOpacity(
                       opacity: _showCharacter ? 1.0 : 0.0,
                       duration: Duration(milliseconds: 750),

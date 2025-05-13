@@ -3,11 +3,24 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http; // 네트워크 통신 패키지
 import 'dart:convert'; // JSON 파싱 패키지
 
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import 'splash_screen.dart';
 
 void main() async {
   // 플러그인이 제대로 초기화되도록 추가
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase Initialization
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Hive Initialization and open userBox
+  await Hive.initFlutter();
+  await Hive.openBox('userBox');
 
   //await fetchRoutines();
   //await registerUser();
@@ -18,7 +31,7 @@ void main() async {
 List<Map<String, dynamic>> fetchedRoutine = [];
 
 Future<void> fetchRoutines() async {
-  final uri = Uri.parse('https://haruitfront.vercel.app/api/routine');
+  final uri = Uri.parse('https://haruitfront.vercel.app/api/routine?tag=자기이해');
   final response = await http.get(uri);
 
   if (response.statusCode == 200) {
@@ -34,6 +47,7 @@ Future<void> fetchRoutines() async {
   }
 }
 
+// 현재 기준 얘처럼 보내면 아무 문제 없음
 Future<void> registerUser() async {
   final uri = Uri.parse('https://haruitfront.vercel.app/api/auth/initial');
 
@@ -49,12 +63,12 @@ Future<void> registerUser() async {
       "nickname": "무슨 거북이 머시기 그런 거", // onboarding_screen_one에서 randomName으로 저장함
       "goalDate": 30, // onboarding_screen_two에서 goalDate로 저장함
       "routine": {
-        "id": "68218b8d1cfea378c19e9475",
-        "title": "내 공간 1개 정돈하기",
-        "desc": "깔끔하고 깨끗해진 내 공간을 만들어보세요.",
-        "how": "깔끔하게 정돈한 사진을 찍고, 공유해요.",
-        "icon": "🗑️️",
-        "color": "yellow"
+        "id": "6822a2d2e908569ba237f299",
+        "title": "오늘의 기분 한 줄 남기기",
+        "desc": "하루를 마무리하며, 내 감정이나 기분을 한 문장으로 기록해요. 조금 어설퍼도 괜찮아요.",
+        "how": "내 감정을 떠올리게 하는 사진을 찍거나, 감정을 표현한 이미지를 올려요. 한 문장으로 오늘의 기분을 기록해요.",
+        "icon": "✍️",
+        "color": "FFE8F3"
       },
       "reflection": "책상을 정리하니 행복하네.",
       "imgSrc": "https://i.imgur.com/Ot5DWAW.png"

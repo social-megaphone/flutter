@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets.dart';
 
@@ -30,6 +32,22 @@ class _OnboardingScreenTwoState extends State<OnboardingScreenTwo> {
     print('목표 일수 저장여부: $saved');
   }
 
+  // Firestore에 저장하는 코드
+  final firestore = FirebaseFirestore.instance;
+
+  Future<void> firestoreGoalDate(String goalDate) async {
+    // String goalDate를 int goalDateInt로 변경
+    final int goalDateInt = int.parse(goalDate);
+
+    // Hive/userBox 연 뒤
+    final userBox = Hive.box('userBox');
+
+    // uuid에 접근해서 이를 이름으로하는 doc을 업데이트
+    await firestore.collection('posts').doc(userBox.get('uuid')).update({
+      "goalDate" : goalDateInt,
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,7 +70,12 @@ class _OnboardingScreenTwoState extends State<OnboardingScreenTwo> {
     setState(() {
       _selectedDayCount = _availableDays[index];
     });
+    // fsStorage에 저장
     storeGoalDate(_selectedDayCount.toString());
+
+    // firestore에 저장
+
+
     widget.onDaySelected?.call(_selectedDayCount);
   }
 

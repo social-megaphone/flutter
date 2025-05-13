@@ -199,20 +199,22 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     final routineName = await fsStorage.read(key: 'routineName');
     print('routineName 가져오기: $routineName');
     String routineId = "";
+    final sogam = await fsStorage.read(key: 'sogam');
+    print('sogam 가져오기: $sogam');
 
-    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine?$routineTag');
+    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine?tag=$routineTag');
     final fetchResponse = await http.get(fetchUri);
-
-
 
     if(fetchResponse.statusCode == 200) {
       print('fetchResponse.statusCode is 200');
       final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
+      print('jsonData 출력: $jsonData');
       for(var routine in jsonData) {
         print("routine['title']은 ${routine['title']}");
         if(routine['title'] == routineName) {
           print('routineName은 $routineName');
-          routineId = routine['_id']["\$oid"];
+          print("routine['id']는 ${routine['id']}");
+          routineId = routine['id'];
           print('그래서 routineId는 $routineId');
         }
       }
@@ -235,7 +237,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
         "routine": {
           "id": routineId,
         },
-        "reflection": "",
+        "reflection": sogam,
         "imgSrc": "https://i.imgur.com/Ot5DWAW.png"
       }),
     );
@@ -686,8 +688,8 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                         // TextFormField 내용 저장
                         await storeSogam(_reflectionController.text.trim());
 
-                        // 유저 등록인데, 아직은 제껴놓자.
-                        // await registerUser();
+                        // 유저 등록.
+                        await registerUser();
 
                         Navigator.of(parentContext).pushReplacement(
                           Routing.customPageRouteBuilder(AfterOnboardingMain(pageIndex: 2), 500),

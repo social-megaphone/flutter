@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inner_shadow/flutter_inner_shadow.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../routine/routine_screen_one.dart';
 import 'dart:async';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../routine/routine_screen_one.dart';
 
 class OnboardingScreenFour extends StatefulWidget {
   const OnboardingScreenFour({super.key, required this.dayCount, required this.selectedTag});
@@ -385,6 +388,22 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
     await fsStorage.write(key: 'routineName', value: routineName);
     final saved = await fsStorage.read(key: 'routineName');
     print('루틴 이름 저장됨: $saved');
+  }
+
+  // Firestore에 저장하는 코드
+  final firestore = FirebaseFirestore.instance;
+
+  Future<void> firestoreRoutineName(String routineName) async {
+    // Hive/userBox 연 뒤
+    final userBox = Hive.box('userBox');
+
+
+    
+
+    // uuid에 접근해서 이를 이름으로하는 doc을 업데이트
+    await firestore.collection('posts').doc(userBox.get('uuid')).update({
+      "routineName" : routineName,
+    });
   }
 
   Widget routineDialog(int index) {

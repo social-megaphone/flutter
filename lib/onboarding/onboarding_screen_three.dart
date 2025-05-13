@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets.dart';
 
@@ -80,6 +82,22 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
     await fsStorage.write(key: 'tag', value: selectedTags[0]);
     final saved = await fsStorage.read(key: 'tag');
     print('태그 저장여부: $saved');
+  }
+
+  // Firestore에 저장하는 코드
+  final firestore = FirebaseFirestore.instance;
+
+  Future<void> firestoreTag(List<String> selectedTags) async {
+    // selectedTags 중 1번째 값 (사실 값이 1개긴 함)
+    final tag = selectedTags[0];
+
+    // Hive/userBox 연 뒤
+    final userBox = Hive.box('userBox');
+
+    // uuid에 접근해서 이를 이름으로하는 doc을 업데이트
+    await firestore.collection('posts').doc(userBox.get('uuid')).update({
+      "tag" : tag,
+    });
   }
 
   Widget _buildGridItem(String tagName) {
