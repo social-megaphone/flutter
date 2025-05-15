@@ -43,23 +43,23 @@ class _OnboardingMainState extends State<OnboardingMain> {
         initialDayCount: _dayCount,
       ),
       OnboardingScreenThree(
-        onTagSelectionChanged: (isEnabled) {
+        onCategorySelectionChanged: (isEnabled) {
           setState(() {
             _isNextEnabled = isEnabled;
           });
         },
-        onTagSelected: (tag) {
+        onCategorySelected: (category) {
           setState(() {
-            _selectedTag = tag;
+            _selectedTag = category;
           });
         },
         // 초기 태그. two에서 three로 갈때는 아무것도 전달 X
         // four에서 three로 갈때는 변한 _selectedTag 전달
-        initialSelectedTag: _selectedTag,
+        initialSelectedCategory: _selectedTag,
       ),
       OnboardingScreenFour(
         dayCount: _dayCount,
-        selectedTag: _selectedTag,
+        selectedCategory: _selectedTag,
       ),
     ];
   }
@@ -102,7 +102,7 @@ class _OnboardingMainState extends State<OnboardingMain> {
             child: Stack(
               children: [
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 500), // 전환 애니메이션 속도
+                  duration: const Duration(milliseconds: 300), // 전환 애니메이션 속도
                   child: _buildOnboardingPages()[_onboardingPageIndex],
                   transitionBuilder: (Widget child, Animation<double> animation) {
                     return FadeTransition(opacity: animation, child: child);

@@ -10,8 +10,8 @@ import 'dart:async';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart'; // 키보드 관련 패키지
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http_parser/http_parser.dart'; // for image upload
 
-import '../after_onboarding_main.dart';
 import '../falling_petal.dart';
 import '../onboarding/onboarding_main.dart';
 import '../widgets.dart';
@@ -30,8 +30,6 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   bool isButtonEnabled = false;
   final ImagePicker _picker = ImagePicker();
   List<File> _selectedImageFiles = []; // XFile 대신 File 객체 사용
-  bool? applyAutoMove = false; // 자동으로 routine_screen_two로 이동할지 여부
-  Timer? _autoMoveTimer; // 타이머 변수 추가
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _textFieldKey = GlobalKey();
@@ -43,8 +41,8 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     super.initState();
     _reflectionController.addListener(() {
       setState(() {
-        // 사진이 선택되었거나 텍스트가 입력되었을 때 버튼 활성화
-        isButtonEnabled = _reflectionController.text.trim().isNotEmpty || _selectedImageFiles.isNotEmpty;
+        // 사진이 선택되었고 텍스트가 입력되었을 때만 버튼 활성화
+        isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
       });
     });
     _keyboardVisibilityController = KeyboardVisibilityController();
@@ -60,7 +58,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
 
   @override
   void dispose() {
-    _autoMoveTimer?.cancel(); // 타이머 정리
+    //_autoMoveTimer?.cancel(); // 타이머 정리
     _reflectionController.dispose();
     _keyboardSubscription.cancel();
     _scrollController.dispose();
@@ -119,10 +117,21 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
           );
         } else {
           setState(() {
-            _selectedImageFiles = validFiles;
-            isButtonEnabled = true;
+            // 3장 초과 선택 시 처음 3장만 사용
+            _selectedImageFiles = validFiles.length > 3 ? validFiles.sublist(0, 3) : validFiles;
+            isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
           });
           ScaffoldMessenger.of(context).clearSnackBars();
+
+          // 3장 초과 선택된 경우 알림
+          if (validFiles.length > 3) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('최대 3장까지만 선택 가능합니다. 처음 3장이 선택되었습니다.'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
@@ -185,7 +194,6 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
 
   // 유저 가입시키는 part
   Future<void> registerUser() async {
-
     print('registerUser 시작');
 
     // 과거의 데이터 불러오는 부분
@@ -201,14 +209,18 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     String routineId = "";
     final sogam = await fsStorage.read(key: 'sogam');
     print('sogam 가져오기: $sogam');
-
-    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine?tag=$routineTag');
+ 
+    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine');
+    //final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine?tag=$routineTag');
     final fetchResponse = await http.get(fetchUri);
 
     if(fetchResponse.statusCode == 200) {
       print('fetchResponse.statusCode is 200');
       final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
+      
       print('jsonData 출력: $jsonData');
+
+
       for(var routine in jsonData) {
         print("routine['title']은 ${routine['title']}");
         if(routine['title'] == routineName) {
@@ -220,9 +232,43 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
       }
     }
 
+    // 사진 업로드 하는 곳
+    final uriForImageUpload = Uri.parse('https://haruitfront.vercel.app/api/img-upload');
+    final request = http.MultipartRequest('POST', uriForImageUpload);
+
+    for (int i = 0; i < _selectedImageFiles.length; i++) {
+      final file = await http.MultipartFile.fromPath(
+        'img',
+        _selectedImageFiles[i].path,
+        contentType: MediaType('image', 'png'),
+      );
+      request.files.add(file);
+    }
+
+    List<String> imageUrl = ["https://i.imgur.com/Ot5DWAW.png"]; // 기본값으로 더미 이미지 설정
+    final streamedResponse = await request.send();
+    final imgResponse = await http.Response.fromStream(streamedResponse);
+
+    if (imgResponse.statusCode == 200) {
+      final result = jsonDecode(imgResponse.body);
+      print("result: ${result['data']}");
+      if (result['data'] != null && result['data'].isNotEmpty) {
+        // List<List<String>>을 List<String>으로 변환
+        imageUrl = (result['data'] as List).map((innerList) => innerList[0] as String).toList();
+        print("업로드된 이미지 URL: $imageUrl");
+        print('업로드용 이미지 url string 버전: ${imageUrl.join(", ")}');
+      }
+    } else {
+      print('이미지 업로드 실패: ${imgResponse.statusCode}');
+      print('response.body: ${imgResponse.body}');
+    }
+
+    // 여기까지 이미지 관련 코드
+
     // 에러났을 때 왜 에러났나 보게
     print('fetchResponse.statusCode: ${fetchResponse.statusCode}');
-
+    print('imgResponse.statusCode: ${imgResponse.statusCode}');
+    
     // 이를 DB에 가입시키는 부분
     final uri = Uri.parse('https://haruitfront.vercel.app/api/auth/initial');
 
@@ -238,7 +284,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
           "id": routineId,
         },
         "reflection": sogam,
-        "imgSrc": "https://i.imgur.com/Ot5DWAW.png"
+        "imgSrc": imageUrl.join(", "), // List<String>을 컴마로 구분된 문자열로 변환
       }),
     );
 
@@ -451,44 +497,44 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     );
   }
 
-  Container uploadingPics() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-            blurRadius: 20, // 퍼짐 정도
-            spreadRadius: 0, // 그림자 크기 확장 없음
-            offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-            blurRadius: 20, // 퍼짐 정도
-            spreadRadius: 0, // 그림자 크기 확장 없음
-            offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            '오늘 실천한 순간을\n사진으로 남겨볼까요?',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF828282),
-              height: 1.5, // 줄 간격 조금 띄우기
+  GestureDetector uploadingPics() {
+    return GestureDetector(
+      onTap: _pickImages,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Color(0xFFFAFAFA),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: Offset(0, 8),
             ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 12),
-          GestureDetector(
-            onTap: _pickImages,
-            child: Container(
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Text(
+              '오늘 실천한 순간을\n사진으로 남겨볼까요? (최대 3장)',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF828282),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12),
+            Container(
               width: 100,
               padding: EdgeInsets.symmetric(
                 vertical: 2,
@@ -499,87 +545,87 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
               ),
               child: Center(
                 child: Text(
-                  '사진 업로드',
+                  _selectedImageFiles.isEmpty ? '사진 업로드' : '사진 바꾸기',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF8C7154),
-                    height: 1.5, // 줄 간격 조금 띄우기
+                    height: 1.5,
                   ),
                 ),
               ),
             ),
-          ),
-          if (_selectedImageFiles.isNotEmpty) ...[
-            SizedBox(height: 16),
-            SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _selectedImageFiles.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            _selectedImageFiles[index],
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              print('이미지 로드 오류: $error');
-                              return Container(
-                                width: 100,
-                                height: 100,
-                                color: Colors.grey[300],
-                                child: Icon(Icons.broken_image, color: Colors.grey[600]),
-                              );
-                            },
+            if (_selectedImageFiles.isNotEmpty) ...[
+              SizedBox(height: 16),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImageFiles.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              _selectedImageFiles[index],
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                print('이미지 로드 오류: $error');
+                                return Container(
+                                  width: 100,
+                                  height: 100,
+                                  color: Colors.grey[300],
+                                  child: Icon(Icons.broken_image, color: Colors.grey[600]),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedImageFiles.removeAt(index);
-                                isButtonEnabled = _reflectionController.text.trim().isNotEmpty || _selectedImageFiles.isNotEmpty;
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 20,
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedImageFiles.removeAt(index);
+                                  isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '${_selectedImageFiles.length}장의 사진이 선택되었습니다',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF8C7154),
+              SizedBox(height: 8),
+              Text(
+                '${_selectedImageFiles.length}장의 사진이 선택되었습니다',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF8C7154),
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -644,22 +690,9 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (sheetContext) {
-              // 타이머 시작
-              _autoMoveTimer = Timer(Duration(seconds: 3), () {
-                // 타이머가 살아있을 때만 이동
-                if (mounted && (_autoMoveTimer?.isActive ?? false)) {
-                  Navigator.of(parentContext).pop();
-                  Navigator.of(parentContext).pushReplacement(
-                    Routing.customPageRouteBuilder(RoutineScreenTwo(
-                      genesisRoutine: widget.genesisRoutine,
-                    ), 500),
-                  );
-                }
-              });
-
               return Container(
                 width: double.infinity,
-                height: MediaQuery.of(parentContext).size.height * 0.45,
+                height: MediaQuery.of(parentContext).size.height * 0.5,
                 padding: EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Color(0xFFFFF2CD),
@@ -668,7 +701,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                 child: Column(
                   children: [
                     Text(
-                      '축하해요,\n루틴을 완료했어요!',
+                      '축하해요,\n루틴을 완료해서\n뱃지를 받았어요!',
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w700,
@@ -681,18 +714,18 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                     SizedBox(height: 32),
                     GestureDetector(
                       onTap: () async {
-                        // 타이머 취소
-                        _autoMoveTimer?.cancel();
-                        Navigator.of(parentContext).pop();
-
                         // TextFormField 내용 저장
                         await storeSogam(_reflectionController.text.trim());
 
                         // 유저 등록.
+                        // 근데, 등록이 되어있으면 루틴로그만 등록하게 바꿔야 함.
                         await registerUser();
 
+                        /// 아직 이거 정확하지 않음.
                         Navigator.of(parentContext).pushReplacement(
-                          Routing.customPageRouteBuilder(AfterOnboardingMain(pageIndex: 2), 500),
+                          Routing.customPageRouteBuilder(RoutineScreenTwo(
+                            genesisRoutine: widget.genesisRoutine,
+                          ), 300),
                         );
                       },
                       child: Container(
@@ -709,7 +742,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                           ],
                         ),
                         child: Text(
-                          '뱃지 받기',
+                          '회고 적기',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

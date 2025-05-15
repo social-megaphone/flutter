@@ -18,42 +18,9 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
 
   List<String> tagList = ['전체', '생활습관', '감정돌봄', '대인관계', '자기계발', '작은도전'];
 
-  // '전체 포스트들'의 정보를 담은 리스트
-  final List<List<String>> _allPostInfoList = [
-    ['생활습관', '조용한 강아지', '침대 정리하기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
-    ['감정돌봄', '따뜻한 고양이', '내 감정 한 줄 쓰기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
-    ['대인관계', '활발한 거북이', '아침 물 한 잔 마시기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
-    ['자기계발', '유쾌한 참새', '책 한 쪽 읽기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
-    ['작은도전', '용감한 토끼', '새로운 길로 출근하기', '내가 건강해지는 기분이 들어서 좋아요.\n이제 3일 루틴을 시도해보고 싶어요.'],
-  ];
-
   @override
   void initState() {
     super.initState();
-
-    // 과거 코드
-    /*
-    postInfoList = List.from(_allPostInfoList);
-    final storage = FlutterSecureStorage();
-
-    // 임시로 사용자가 추가한 루틴로그를 _allPostInfoList 맨 위에 넣은 다음에 보여주는 함수
-    Future<void> loadStoredPost() async {
-      final tag = await storage.read(key: 'tag');
-      final randomName = await storage.read(key: 'randomName');
-      final routineName = await storage.read(key: 'routineName');
-      final sogam = await storage.read(key: 'sogam');
-
-      if (tag != null && randomName != null && routineName != null && sogam != null) {
-        final newPost = [tag, randomName, routineName, sogam];
-        setState(() {
-          _allPostInfoList.insert(0, newPost);
-          postInfoList = List.from(_allPostInfoList);
-        });
-      }
-    }
-
-    loadStoredPost();
-    */
 
     fetchRoutines(); // -> 이걸 하면 알아서 fetchedRoutineLogs가 업데이트 됨.
   }
@@ -66,16 +33,16 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
   List<List<String>> postInfoList = [];
 
   Future<void> fetchRoutines() async {
-    final uri = Uri.parse('https://haruitfront.vercel.app/api/routine-log');
-
+    // jwt_token 불러옴
     final String? token = await fsStorage.read(key: 'jwt_token');
-
     if(token == null) {
       print('jwt_token is null. error happened');
     } else {
-      print('jwt_token exists at fetchRoutines: $token');
+      print('jwt_token exists: $token');
     }
 
+    // jwt_token 활용해서 루틴 로그 불러옴
+    final uri = Uri.parse('https://haruitfront.vercel.app/api/routine-log');
     final response = await http.get(
       uri,
       headers: {
@@ -85,35 +52,37 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
     );
 
     if (response.statusCode == 200) {
-      // routine log를 전부 받아서 jsonData에 넣고
-      final List<dynamic> jsonData = jsonDecode(response.body)['routineLogs'];
+      // 받아오는 데이터 전체 -> jsonData
+      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+      // 그 중, 루틴 로그와 관련된 부분 -> routineLogs
+      final List<dynamic> routineLogs = jsonData['routineLogs'];
+      // 그 중, 다음 커서와 관련된 부분 -> nextCursor
+      final String nextCursor = jsonData['nextCursor'];
+      // 그 중, 더 불러올 수 있는지 여부와 관련된 부분 -> hasMore
+      final bool hasMore = jsonData['hasMore'];
+
+
 
       final List<List<String>> tempLogs = [];
 
-      for(var log in jsonData) {
+      for(var log in routineLogs) {
         final String category = categoryFinder(log['title']);
+        final List<String> imageUrls = log['logImg'] != null ? 
+          (log['logImg'] as String).split(', ').where((url) => url.isNotEmpty).toList() : [];
 
-        if(log['nickname'] != '무슨 거북이 머시기 그런 거') {
-          tempLogs.add([
-            category,
-            log['nickname'],
-            log['title'],
-            log['reflection'],
-          ]);
-        }
+        tempLogs.add([
+          category,
+          log['nickname'],
+          log['title'],
+          log['reflection'],
+          imageUrls.join(','), // 이미지 URL들을 쉼표로 구분된 문자열로 저장
+        ]);
       }
 
       setState(() {
         fetchedRoutineLogs = tempLogs;
-        postInfoList = List.from(fetchedRoutineLogs); // ✅ 여기서 같이 초기화
+        postInfoList = List.from(fetchedRoutineLogs); // 여기서 같이 초기화
       });
-
-      // 여기서 뽑아내야 하는 정보
-      // 1. 루틴 이름
-      // 2. 카테고리 -> 인데 테그로 그냥 쓰자
-      // 3. 루틴 제목
-      // 4. 소감 -> ['reflection']
-
     } else {
       print('오류 발생: ${response.statusCode}');
     }
@@ -200,7 +169,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
           Image.asset('assets/images/character_without_cushion.png', height: 80),
           Spacer(),
           // 알림 버튼
-          AfterOnboarding.notificationButton(Color(0xFFFFF7DC)),
+          AfterOnboarding.notificationButton(Color(0xFFFFF7DC), Color(0xFF8C7154)),
         ],
       ),
     );
@@ -304,6 +273,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
   Widget _buildRoutineLogPost(List<String> postInfo) {
     PageController pageController = PageController();
     int currentIndex = 0;
+    final List<String> imageUrls = postInfo[4].isNotEmpty ? postInfo[4].split(',') : [];
 
     // 태그에 따른 색상 반환 함수 (배경색)
     Color getTagColor(String tag) {
@@ -326,142 +296,164 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
     }
 
     return GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => LoungePostScreen(
-                  postInfo: postInfo,
-                ),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  );
-                },
-                transitionDuration: const Duration(milliseconds: 150),
-              ),
-            );
-          },
-          child: Container(
-            height: 295,
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAFAFA),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha((0.1 * 255).toInt()), // 아주 연한 그림자
-                  blurRadius: 20, // 퍼짐 정도
-                  spreadRadius: 0, // 그림자 크기 확장 없음
-                  offset: Offset(0, 8), // 아래쪽으로 살짝 이동
-                ),
-                BoxShadow(
-                  color: Colors.black.withAlpha((0.1 * 255).toInt()), // 아주 연한 그림자
-                  blurRadius: 20, // 퍼짐 정도
-                  spreadRadius: 0, // 그림자 크기 확장 없음
-                  offset: Offset(0, -8), // 아래쪽으로 살짝 이동
-                ),
-              ],
+      onTap: () {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => LoungePostScreen(
+              postInfo: postInfo,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 150),
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAFAFA),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((0.1 * 255).toInt()), // 아주 연한 그림자
+              blurRadius: 20, // 퍼짐 정도
+              spreadRadius: 0, // 그림자 크기 확장 없음
+              offset: Offset(0, 8), // 아래쪽으로 살짝 이동
+            ),
+            BoxShadow(
+              color: Colors.black.withAlpha((0.1 * 255).toInt()), // 아주 연한 그림자
+              blurRadius: 20, // 퍼짐 정도
+              spreadRadius: 0, // 그림자 크기 확장 없음
+              offset: Offset(0, -8), // 아래쪽으로 살짝 이동
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // '조용한 강아지의 잇루틴' + 태그
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // '조용한 강아지의 잇루틴' + 태그
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // '조용한 강아지님의 잇루틴'
-                    Text.rich(
+                // '조용한 강아지님의 잇루틴'
+                Text.rich(
+                  TextSpan(
+                    children: [
                       TextSpan(
-                        children: [
-                          TextSpan(
-                            text: postInfo[1],
-                            style: const TextStyle(
-                              color: Color(0xFF8C7154),
-                            ),
-                          ),
-                          TextSpan(
-                            text: '님의 잇루틴',
-                          ),
-                        ]
-                      ),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF121212),
-                      ),
-                      maxLines: 2,
-                    ),
-                    // 태그
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Color(0xFF8C7154), width: 1),
-                      ),
-                      child: Text(
-                        postInfo[0],
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                        text: postInfo[1],
+                        style: const TextStyle(
                           color: Color(0xFF8C7154),
                         ),
                       ),
-                    ),
-                  ],
+                      TextSpan(
+                        text: '님의 잇루틴',
+                      ),
+                    ]
+                  ),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF121212),
+                  ),
+                  maxLines: 2,
                 ),
-                const SizedBox(height: 12),
-                // 사진 (PageView)
-                SizedBox(
-                  width: double.infinity,
-                  height: 136,
-                  child: PageView.builder(
-                    controller: pageController,
-                    itemCount: 5,
-                    pageSnapping: true,
-                    onPageChanged: (index) {
-                      setState(() {
-                        currentIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      return Stack(
-                        children: [
-                          Container(
-                            margin: EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Color(0xFFB0A18E),
-                                width: 2,
-                              ),
+                // 태그
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Color(0xFF8C7154), width: 1),
+                  ),
+                  child: Text(
+                    postInfo[0],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF8C7154),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // 사진 (PageView)
+            SizedBox(
+              width: double.infinity,
+              child: AspectRatio(
+                aspectRatio: 4/3,
+                child: PageView.builder(
+                  controller: pageController,
+                  itemCount: imageUrls.isEmpty ? 1 : imageUrls.length,
+                  pageSnapping: true,
+                  onPageChanged: (index) {
+                    setState(() {
+                      currentIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Color(0xFFB0A18E),
+                              width: 2,
                             ),
-                            child: Center(
+                          ),
+                          child: imageUrls.isEmpty ? 
+                            Center(
                               child: Text(
-                                '사진${index + 1}',
+                                'placeholder',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF7A634B),
                                 ),
                               ),
+                            ) :
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: SizedBox.expand(
+                                child: Image.network(
+                                  imageUrls[index],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Text(
+                                        'placeholder',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF7A634B),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              margin: EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(5, (dotIndex) {
+                        ),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Container(
+                            margin: EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(
+                                imageUrls.isEmpty ? 1 : imageUrls.length,
+                                (dotIndex) {
                                   return Container(
                                     margin: EdgeInsets.symmetric(horizontal: 4),
                                     width: 8,
@@ -471,62 +463,64 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                                       color: currentIndex == dotIndex ? Color(0xFF7A634B) : Color(0xFFD9D9D9),
                                     ),
                                   );
-                                }),
+                                }
                               ),
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // 루틴 제목 + 저장 버튼
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // 루틴 제목 - 여기도 색상 변경
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
-                      ),
-                      child: Text(
-                        postInfo[2],
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
                         ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        // 색상 변화 로직 + 실제 저장 로직
-                      },
-                      child: Icon(Icons.bookmark_outline_rounded),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 8),
-                // 소감
-                Text(
-                  postInfo[3],
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF121212),
-                    height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // 루틴 제목 + 저장 버튼
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 루틴 제목 - 여기도 색상 변경
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
                   ),
+                  decoration: BoxDecoration(
+                    color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
+                  ),
+                  child: Text(
+                    postInfo[2],
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF666666),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    // 색상 변화 로직 + 실제 저장 로직
+                  },
+                  child: Icon(Icons.bookmark_outline_rounded),
                 ),
               ],
             ),
-          ),
-        );
+            const SizedBox(height: 8),
+            // 소감
+            Text(
+              postInfo[3],
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF121212),
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inner_shadow/flutter_inner_shadow.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../after_onboarding_main.dart';
 import '../falling_petal.dart';
@@ -19,15 +20,28 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
   final TextEditingController _reflectionController = TextEditingController();
   bool isButtonEnabled = false;
   final FocusNode _focusNode = FocusNode();
+  final fsStorage = FlutterSecureStorage();
+  String? nickname;
+  int? goalDate;
 
   @override
   void initState() {
     super.initState();
+    _loadData();
     _reflectionController.addListener(() {
       setState(() {
         // 사진이 선택되었거나 텍스트가 입력되었을 때 버튼 활성화
         isButtonEnabled = _reflectionController.text.trim().isNotEmpty;
       });
+    });
+  }
+
+  Future<void> _loadData() async {
+    final storedNickname = await fsStorage.read(key: 'randomName');
+    final storedGoalDate = await fsStorage.read(key: 'goalDate');
+    setState(() {
+      nickname = storedNickname;
+      goalDate = storedGoalDate != null ? int.parse(storedGoalDate) : 7;
     });
   }
 
@@ -145,7 +159,7 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
                 text: '루틴을 시도해본 소감이 어때요?\n',
               ),
               TextSpan(
-                text: '활발한 거북이님',
+                text: '${nickname ?? "활발한 거북이"}님',
                 style: TextStyle(
                   color: Color(0xFF8C7154),
                 ),
@@ -179,16 +193,16 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-            blurRadius: 20, // 퍼짐 정도
-            spreadRadius: 0, // 그림자 크기 확장 없음
-            offset: Offset(0, 8), // 아래쪽으로 살짝 이동
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-            blurRadius: 20, // 퍼짐 정도
-            spreadRadius: 0, // 그림자 크기 확장 없음
-            offset: Offset(0, -8), // 아래쪽으로 살짝 이동
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: Offset(0, -8),
           ),
         ],
       ),
@@ -196,7 +210,7 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
         controller: _reflectionController,
         focusNode: _focusNode,
         decoration: InputDecoration(
-          hintText: '7일 간 하루잇 루틴을 도전해본\n소감을 자유롭게 적어봐요.',
+          hintText: '${goalDate ?? 7}일 간 하루잇 루틴을 도전해본\n소감을 자유롭게 적어봐요.',
           hintStyle: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -207,7 +221,7 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
           alignLabelWithHint: true,
         ),
         maxLines: null,
-        textAlign: TextAlign.center,
+        textAlign: TextAlign.left,
         textAlignVertical: TextAlignVertical.center,
         style: TextStyle(
           fontSize: 18,
@@ -222,7 +236,10 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushReplacement(
-          Routing.customPageRouteBuilder(AfterOnboardingMain(), 500),
+          Routing.customPageRouteBuilder(AfterOnboardingMain(
+            // 라운지로 이동! -> 시간 순으로 포스트 보여주니, 니께 제일 위에 뜰 거임.
+            pageIndex: 0,
+          ), 300),
         );
       },
       child: Container(

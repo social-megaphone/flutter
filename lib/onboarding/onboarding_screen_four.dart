@@ -8,10 +8,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../routine/routine_screen_one.dart';
 
 class OnboardingScreenFour extends StatefulWidget {
-  const OnboardingScreenFour({super.key, required this.dayCount, required this.selectedTag});
+  const OnboardingScreenFour({super.key, required this.dayCount, required this.selectedCategory});
 
   final int dayCount;
-  final String selectedTag;
+  final String selectedCategory;
 
   @override
   State<OnboardingScreenFour> createState() => _OnboardingScreenFourState();
@@ -21,6 +21,8 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
   bool _showInitialText = true;
   Timer? _textChangeTimer;
   List<List<String>> filteredRoutines = []; 
+  final fsStorage = FlutterSecureStorage();
+  String? nickname;
 
   // 루틴 데이터 구조 변경: ['루틴 태그', '태그 내 번호', '루틴 제목1', '루틴 제목2', '수행방법', '이미지']
   final List<List<String>> allRoutines = [
@@ -90,6 +92,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
   @override
   void initState() {
     super.initState();
+    _loadNickname();
     _textChangeTimer = Timer(const Duration(seconds: 3), () {
       setState(() {
         _showInitialText = false;
@@ -97,9 +100,27 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
     });
     
     // 선택된 태그에 따라 필터링
-    _filterRoutinesByTag();
+    // _filterRoutinesByTag();
+    // 선택된 카테고리에 따라 필터링
+    _filterRoutinesByCategory();
   }
 
+  Future<void> _loadNickname() async {
+    final storedNickname = await fsStorage.read(key: 'randomName');
+    setState(() {
+      nickname = storedNickname;
+    });
+  }
+
+  void _filterRoutinesByCategory() {
+    for(var routine in allRoutines) {
+      if(routine[0] == widget.selectedCategory) {
+        filteredRoutines.add(routine);
+      }
+    }
+  }
+
+  /*
   void _filterRoutinesByTag() {
     // 태그에 따른 루틴 ID를 매핑
     Map<String, List<String>> tagToRoutineIds = {
@@ -135,6 +156,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
       return routineIds.contains(routineId);
     }).toList();
   }
+  */
 
   @override
   void dispose() {
@@ -203,7 +225,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                           text: ' 뒤, 건강한 사람이 되고 싶은\n',
                         ),
                         TextSpan(
-                          text: '활발한 거북이님',
+                          text: '${nickname ?? "활발한 거북이"}님',
                           style: TextStyle(
                             color: Color(0xFF8C7154),
                           ),
@@ -212,7 +234,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                           text: '에게 도움이 될\n',
                         ),
                         TextSpan(
-                          text: widget.selectedTag,
+                          text: widget.selectedCategory,
                           style: TextStyle(
                             color: Color(0xFF8C7154),
                           ),
@@ -381,8 +403,6 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
       ),
     );
   }
-
-  final fsStorage = FlutterSecureStorage();
 
   Future<void> storeRoutineName(String routineName) async {
     await fsStorage.write(key: 'routineName', value: routineName);

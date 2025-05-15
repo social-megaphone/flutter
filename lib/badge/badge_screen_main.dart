@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../widgets.dart';
 
@@ -11,6 +12,13 @@ class BadgeScreenMain extends StatefulWidget {
 }
 
 class _BadgeScreenMainState extends State<BadgeScreenMain> {
+  // 닉네임 받아오기
+  final fsStorage = FlutterSecureStorage();
+  // 이렇게 없는 값일 수도 있다고 해놓고, initState에서 받아옴.
+  // initState가 실행되기 전에는 nickname이라는 변수가 없을테니
+  // Text 위젯에서 nickname ?? '활발한 거북이' 이렇게 씀.
+  String? nickname;
+
   // 레벨별 배지 위치 데이터
   final Map<int, List<Map<String, double>>> badgePositions = {
     1: [ // 레벨 1의 배지 위치
@@ -65,17 +73,29 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
   int currentLevel = 1; // 현재 레벨
 
   @override
+  void initState() {
+    super.initState();
+    _loadNickname();
+  }
+
+  Future<void> _loadNickname() async {
+    final storedNickname = await fsStorage.read(key: 'randomName');
+    if (!mounted) return;
+    setState(() {
+      nickname = storedNickname;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
       child: Column(
         children: [
-          SizedBox(height: 12),
+          SizedBox(height: 16),
           // 제목 및 알림 버튼
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 32,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 32),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -90,7 +110,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                 ),
                 Spacer(),
                 // 알림 버튼
-                AfterOnboarding.notificationButton(Color(0xFF8C7154)),
+                AfterOnboarding.notificationButton(Color(0xFF8C7154), Color(0xFFFCE9B2)),
               ],
             ),
           ),
@@ -124,7 +144,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                       ),
                       SizedBox(height: 12),
                       Text(
-                        '활발한 거북이',
+                        nickname ?? '활발한 거북이',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -238,6 +258,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                 
                 // 0.5초 후에 다이얼로그 표시
                 Timer(Duration(milliseconds: 500), () {
+                  if (!mounted) return;
                   _showCongratulationDialog();
                 });
               }
@@ -331,6 +352,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
         });
         
         return Container(
+          width: MediaQuery.of(context).size.width,
           decoration: BoxDecoration(
             color: Color(0xFFFFF7DC),
             borderRadius: BorderRadius.only(
@@ -343,7 +365,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '활발한 거북이님,\n레벨업 축하해요!',
+                '${nickname ?? "활발한 거북이"}님,\n레벨업 축하해요!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
@@ -376,36 +398,6 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
                 ),
               ),
               SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.home_outlined, color: Color(0xFFBFB192), size: 30),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.bookmark_border_outlined, color: Color(0xFFBFB192), size: 30),
-                    onPressed: () {},
-                  ),
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF8C7154),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.add, color: Colors.white, size: 30),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.assistant_navigation, color: Color(0xFFBFB192), size: 30),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.person_outline, color: Color(0xFFBFB192), size: 30),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
             ],
           ),
         );
@@ -416,6 +408,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
   // 레벨업 처리
   void _levelUp() {
     if (currentLevel < 3) { // 최대 레벨은 3
+      if (!mounted) return;
       setState(() {
         currentLevel += 1;
         badgeActivated = List.generate(5, (index) => false); // 배지 초기화

@@ -101,31 +101,35 @@ class Onboarding {
 
 class AfterOnboarding {
   // 내부 padding all 12, 외부 padding horizontal 32 기준, 우측 정렬된 경우 사용할 notificationButton
-  static Column notificationButton(Color color) {
+  static Column notificationButton(Color backgroundColor, Color iconColor) {
     return Column(
       children: [
         Container(
           padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: color,
+            color: backgroundColor,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                blurRadius: 10, // 퍼짐 정도
+                blurRadius: 5, // 퍼짐 정도
                 spreadRadius: 0, // 그림자 크기 확장 없음
-                offset: Offset(0, 4), // 아래쪽으로 살짝 이동
+                offset: Offset(0, 2), // 아래쪽으로 살짝 이동
               ),
               BoxShadow(
                 color: Colors.black.withOpacity(0.1), // 아주 연한 그림자
-                blurRadius: 10, // 퍼짐 정도
+                blurRadius: 5, // 퍼짐 정도
                 spreadRadius: 0, // 그림자 크기 확장 없음
-                offset: Offset(0, -4), // 아래쪽으로 살짝 이동
+                offset: Offset(0, -2), // 아래쪽으로 살짝 이동
               ),
             ],
           ),
           child: Center(
-            child: Icon(Icons.notifications, size: 24),
+            child: Icon(
+              Icons.notifications,
+              size: 20,
+              color: iconColor,
+            ),
           ),
         ),
         SizedBox(height: 32),

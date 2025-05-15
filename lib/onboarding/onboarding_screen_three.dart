@@ -6,11 +6,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets.dart';
 
 class OnboardingScreenThree extends StatefulWidget {
-  final void Function(bool)? onTagSelectionChanged;
-  final void Function(String)? onTagSelected;
-  final String initialSelectedTag;
+  final void Function(bool)? onCategorySelectionChanged;
+  final void Function(String)? onCategorySelected;
+  final String initialSelectedCategory;
 
-  const OnboardingScreenThree({super.key, this.onTagSelectionChanged, this.onTagSelected, required this.initialSelectedTag});
+  const OnboardingScreenThree({super.key, this.onCategorySelectionChanged, this.onCategorySelected, required this.initialSelectedCategory});
 
   @override
   State<OnboardingScreenThree> createState() => _OnboardingScreenThreeState();
@@ -21,8 +21,8 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
   @override
   void initState() {
     super.initState();
-    if(widget.initialSelectedTag != '' && widget.onTagSelected != null) {
-      selectedTags.add(widget.initialSelectedTag);
+    if(widget.initialSelectedCategory != '' && widget.onCategorySelected != null) {
+      selectedTags.add(widget.initialSelectedCategory);
     }
   }
 
@@ -50,21 +50,15 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
                 crossAxisCount: 3, // 3열
                 mainAxisSpacing: 16, // 간격 늘림
                 crossAxisSpacing: 20, // 간격 늘림
-                childAspectRatio: 1.6/1, // 버튼 비율 원복
+                childAspectRatio: 1/1, // 버튼 비율 원복
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildGridItem('생활리듬'),
-                  _buildGridItem('건강/운동'),
+                  _buildGridItem('생활습관'),
                   _buildGridItem('감정돌봄'),
-                  _buildGridItem('자기이해'),
                   _buildGridItem('대인관계'),
-                  _buildGridItem('취미탐색'),
-                  _buildGridItem('진로탐색'),
                   _buildGridItem('자기계발'),
-                  _buildGridItem('일상관찰'),
-                  _buildGridItem('용기실천'),
-                  _buildGridItem('기록/표현'),
+                  _buildGridItem('작은도전'),
                   _buildGridItem('기타'),
                 ],
               ),
@@ -114,9 +108,9 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
               ..add(tagName); // 하나만 선택되도록
           }
           storeTag(selectedTags);
-          widget.onTagSelectionChanged?.call(selectedTags.isNotEmpty);
+          widget.onCategorySelectionChanged?.call(selectedTags.isNotEmpty);
           if (!isSelected) {
-            widget.onTagSelected?.call(tagName);
+            widget.onCategorySelected?.call(tagName);
           }
         });
       },

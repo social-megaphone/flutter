@@ -242,64 +242,92 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
   }
 
   SizedBox pics() {
+    final List<String> imageUrls = widget.postInfo[4].isNotEmpty ? widget.postInfo[4].split(',') : [];
+
     return SizedBox(
       width: double.infinity,
-      height: 200,
-      child: PageView.builder(
-        controller: pageController,
-        itemCount: 5,
-        pageSnapping: true,
-        onPageChanged: (index) {
-          setState(() {
-            currentImageIndex = index;
-          });
-        },
-        itemBuilder: (context, index) {
-          return Stack(
-            children: [
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Color(0xFFB0A18E),
-                    width: 2,
+      child: AspectRatio(
+        aspectRatio: 1/1,
+        child: PageView.builder(
+          controller: pageController,
+          itemCount: imageUrls.isEmpty ? 1 : imageUrls.length,
+          pageSnapping: true,
+          onPageChanged: (index) {
+            setState(() {
+              currentImageIndex = index;
+            });
+          },
+          itemBuilder: (context, index) {
+            return Stack(
+              children: [
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Color(0xFFB0A18E),
+                      width: 2,
+                    ),
                   ),
+                  child: imageUrls.isEmpty ? 
+                    Center(
+                      child: Text(
+                        'placeholder',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF7A634B),
+                        ),
+                      ),
+                    ) :
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox.expand(
+                        child: Image.network(
+                          imageUrls[index],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Text(
+                                'placeholder',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF7A634B),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                 ),
-                child: Center(
-                  child: Text(
-                    '사진${index + 1}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF7A634B),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        imageUrls.isEmpty ? 1 : imageUrls.length,
+                        (dotIndex) {
+                          return Container(
+                            margin: EdgeInsets.symmetric(horizontal: 4),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: currentImageIndex == dotIndex ? Color(0xFF7A634B) : Color(0xFFD9D9D9),
+                            ),
+                          );
+                        }
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  margin: EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(5, (dotIndex) {
-                      return Container(
-                        margin: EdgeInsets.symmetric(horizontal: 4),
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: currentImageIndex == dotIndex ? Color(0xFF7A634B) : Color(0xFFD9D9D9),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

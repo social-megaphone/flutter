@@ -67,24 +67,24 @@ class _SplashScreenState extends State<SplashScreen> {
   // Slogan, Character, Blur, Title을 차례대로 나타내고, 온보딩 화면으로 Navigate
   Future<void> _animateAndNavigate() async {
     // 슬로건 나타내기
-    await Future.delayed(Duration(milliseconds: 750), () {
+    await Future.delayed(Duration(milliseconds: 500), () {
       setState(() => _showSlogan = true);
     });
     // 캐릭터 나타내기
-    await Future.delayed(Duration(milliseconds: 750), () {
+    await Future.delayed(Duration(milliseconds: 500), () {
       setState(() => _showCharacter = true);
     });
     // 블러 효과 나타내기
-    await Future.delayed(Duration(milliseconds: 750), () {
+    await Future.delayed(Duration(milliseconds: 500), () {
       setState(() => _showBlur = true);
     });
     // 타이틀 나타내기
-    await Future.delayed(Duration(milliseconds: 750*2), () {
+    await Future.delayed(Duration(milliseconds: 500*2), () {
       setState(() => _showTitle = true);
     });
 
     // 모든 요소가 보여진 후 더 오래 대기
-    await Future.delayed(Duration(milliseconds: 750 * 4));
+    await Future.delayed(Duration(milliseconds: 750 * 2));
 
     final isReturningUser = await checkIfReturningUser();
 
@@ -93,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Navigator.of(context).pushReplacement(
       Routing.customPageRouteBuilder(
         isReturningUser ? AfterOnboardingMain() : OnboardingMain(),
-        1000,
+        300,
       ),
     );
   }
