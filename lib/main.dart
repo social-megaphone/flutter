@@ -15,7 +15,7 @@ void main() async {
   // Hive Initialization and open userBox
   await Hive.initFlutter();
   await Hive.openBox('userBox');
-  // 123asd
+  // 123asd123
   //await fetchRoutines();
   //await registerUser();
 
