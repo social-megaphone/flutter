@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http; // 네트워크 통신 패키지
 import 'dart:convert'; // JSON 파싱 패키지
 
-import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -12,11 +11,6 @@ import 'splash_screen.dart';
 void main() async {
   // 플러그인이 제대로 초기화되도록 추가
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Firebase Initialization
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
   // Hive Initialization and open userBox
   await Hive.initFlutter();
