@@ -13,6 +13,7 @@ class ProfileScreenMain extends StatefulWidget {
 
 class _ProfileScreenMainState extends State<ProfileScreenMain> {
   int _selectedTabIndex = 0;
+  int _tapCount = 0;
 
   // flutter secure storage에 접근
   final fsStorage = FlutterSecureStorage();
@@ -207,8 +208,13 @@ class _ProfileScreenMainState extends State<ProfileScreenMain> {
           ),
           Spacer(),
           GestureDetector(
-            onTap: () {
-              // 어디로 넘어가는 거에요?
+            onTap: () async {
+              _tapCount++;
+              if (_tapCount == 10) {
+                _tapCount = 0;
+                // 여기에 원하는 await 동작 수행
+                await fsStorage.deleteAll();
+              }
             },
             child: Icon(
               Icons.arrow_forward_ios,

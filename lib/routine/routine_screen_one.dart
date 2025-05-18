@@ -246,8 +246,13 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
       final result = jsonDecode(imgResponse.body);
       print("result: ${result['data']}");
       if (result['data'] != null && result['data'].isNotEmpty) {
-        // List<List<String>>을 List<String>으로 변환
-        imageUrl = (result['data'] as List).map((innerList) => innerList[0] as String).toList();
+        if(result['data'].first is List) {
+          // List<List<String>>을 List<String>으로 변환
+          imageUrl = (result['data'] as List).map((innerList) => innerList[0] as String).toList();
+        } else if (result['data'].first is String) {
+          imageUrl = (result['data'] as List).cast<String>();
+        }
+
         print("업로드된 이미지 URL: $imageUrl");
         print('업로드용 이미지 url string 버전: ${imageUrl.join(", ")}');
       }

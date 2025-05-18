@@ -14,43 +14,6 @@ class BadgeScreenMain extends StatefulWidget {
 }
 
 class _BadgeScreenMainState extends State<BadgeScreenMain> {
-  // 레벨별 배지 위치 데이터
-  final Map<int, List<Map<String, double>>> badgePositions = {
-    1: [ // 레벨 1의 배지 위치
-      {'top': 40, 'left': 90},
-      {'top': 90, 'left': 180},
-      {'top': 160, 'left': 250},
-      {'top': 210, 'left': 140},
-      {'top': 250, 'left': 40},
-    ],
-    2: [ // 레벨 2의 배지 위치 (연못 징검다리)
-      {'top': 20, 'left': 100},
-      {'top': 90, 'left': 200},
-      {'top': 130, 'left': 110},
-      {'top': 210, 'left': 190},
-      {'top': 250, 'left': 80},
-    ],
-    3: [ // 레벨 3의 배지 위치 (마을 도로)
-      {'top': 30, 'left': 190},
-      {'top': 90, 'left': 80},
-      {'top': 140, 'left': 200},
-      {'top': 200, 'left': 50},
-      {'top': 250, 'left': 150},
-    ],
-  };
-
-  // 레벨별 배경 이미지
-  final Map<int, String> backgroundImages = {
-    1: 'assets/images/badge_map/badge_map_level_one.png',
-    2: 'assets/images/badge_map/badge_map_level_two.png',
-    3: 'assets/images/badge_map/badge_map_level_three.png',
-  };
-
-  // 각 맵의 배지 활성화 상태를 관리하는 리스트
-  List<List<bool>> mapBadgeStates = List.generate(3, (_) => List.generate(5, (index) => false));
-  bool isDialogShown = false;
-  final PageController _pageController = PageController();
-
   @override
   void initState() {
     super.initState();
@@ -83,97 +46,15 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
     setState(() {
       nickname = storedNickname;
       goalDate = (storedGoalDate != null) ? storedGoalDate : null;
-      currentStreak = (storedCurrentStreak != null) ? int.parse(storedCurrentStreak) : null;
+      currentStreak = (storedCurrentStreak != null) ? int.parse(storedCurrentStreak) : 0;
       previousStreak = (storedPreviousStreak != null) ? int.parse(storedPreviousStreak) : 0;
-      level = ((currentStreak ?? 0) + (previousStreak ?? 0)) ~/ 5 + 1;
+      level = (currentStreak! + previousStreak!) ~/ 5;
       isLoaded = true;
     });
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  // 레벨업 다이얼로그 표시
-  void _showCongratulationDialog() {
-    if (isDialogShown) return;
-    isDialogShown = true;
-
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        // 1.5초 후에 자동으로 다이얼로그 닫기
-        Timer(Duration(milliseconds: 1500), () {
-          Navigator.of(context).pop();
-          isDialogShown = false;
-        });
-
-        return Container(
-          width: MediaQuery.of(context).size.width,
-          decoration: BoxDecoration(
-            color: Color(0xFFFFF7DC),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$nickname님,\n레벨업 축하해요!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF8C7154),
-                ),
-              ),
-              SizedBox(height: 20),
-              Image.asset(
-                'assets/images/character_without_cushion.png',
-                height: 120,
-              ),
-              SizedBox(height: 20),
-              Container(
-                width: 150,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Color(0xFFA7CA60),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Center(
-                  child: Text(
-                    titleBasedOnLevel[level! + 1]!, // 본인 title 다음 title 표시!
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 30),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    print('streak: $currentStreak');
-    print('previousStreak: $previousStreak');
-    print('badgeCount: ${currentStreak!+previousStreak!}');
-
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
       child: (isLoaded) ? Column(
@@ -234,14 +115,6 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
     );
   }
 
-  // 레벨별 타이틀
-  final Map<int, String> titleBasedOnLevel = {
-    1: '도전자',
-    2: '모험가',
-    3: '고수',
-    4: '마스터',
-  };
-
   Container profileCard() {
     return Container(
       width: (MediaQuery.of(context).size.width - 16 * 3) / 2 - 25, // 좌우 여백 고려
@@ -263,6 +136,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
             height: 70,
           ),
           SizedBox(height: 12),
+          // 닉네임
           Text(
             nickname!,
             style: TextStyle(
@@ -272,6 +146,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
             ),
           ),
           SizedBox(height: 12),
+          // 레벨
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 4),
@@ -280,7 +155,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              titleBasedOnLevel[level!]!,
+              dataBasedOnLevel[level!][2]!,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -332,7 +207,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '축하해요!\n${goalDate}일간의 루틴을\n성공적으로 완료했어요!',
+                '축하해요!\n$goalDate일간의 루틴을\n성공적으로 완료했어요!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
@@ -348,7 +223,9 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
               SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
-                  Navigator.pop(context);
+                  setState(() {
+                    Navigator.pop(context);
+                  });
                 },
                 child: Container(
                   width: 150,
@@ -382,6 +259,9 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
         print('previousStreak: $previousStreak');
         print('currentStreak: $currentStreak');
         print('new total: ${previousStreak ?? 0 + currentStreak!}');
+        setState(() {
+          // 이게 효과가 있으려나? 한 번 보죠.
+        });
       }
 
       // streak과 goalDate 초기화
@@ -389,7 +269,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
       fsStorage.delete(key: 'goalDate');
       // 화면 새로고침
       setState(() {
-        currentStreak = null;
+        currentStreak = 0;
         goalDate = null;
       });
     });
@@ -524,91 +404,169 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
     );
   }
 
-  Padding growingMap() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        height: 360,
-        child: PageView.builder(
-          controller: _pageController,
-          itemCount: 3,
-          onPageChanged: (index) {
-            setState(() {
-              level = index + 1;
-            });
-            
-            // 이전 맵의 모든 배지가 활성화되어 있고, 다음 맵으로 넘어갈 때
-            if (index > 0 && mapBadgeStates[index - 1].every((badge) => badge)) {
-              _showCongratulationDialog();
-            }
-          },
-          itemBuilder: (context, index) {
-            return Stack(
-              children: [
-                Image.asset(
-                  backgroundImages[index + 1] ?? 'assets/images/badge_map/badge_map_level_one.png',
-                  width: MediaQuery.of(context).size.width - 32,
-                  height: 360,
-                  fit: BoxFit.cover,
-                ),
-                // 동적으로 배지 생성
-                ...List.generate(5, (badgeIndex) {
-                  final positions = badgePositions[level] ?? badgePositions[1]!;
-                  final position = positions[badgeIndex];
-                  
-                  return Positioned(
-                    top: position['top'],
-                    left: position['left'],
-                    child: Container(
-                      width: 75,
-                      height: 75,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFFF2CD).withOpacity(mapBadgeStates[index][badgeIndex] ? 1.0 : 0.5),
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: mapBadgeStates[index][badgeIndex] ? Center(
-                        child: Image.asset(
-                          'assets/images/badge_map/badge_map_${String.fromCharCode(97 + badgeIndex)}.png',
-                          width: 55,
-                          height: 55,
-                        ),
-                      ) : null,
-                    ),
-                  );
-                }),
-                // 이정표
-                Positioned(
-                  bottom: 0,
-                  right: 10,
-                  child: Container(
-                    width: 100,
-                    height: 75,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/badge_map/badge_map_milestone.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Center(
-                      child: Row(
-                        children: [
-                          SizedBox(width: 16),
-                          Text(
-                            titleBasedOnLevel[level]!,
-                            style: TextStyle(
-                              color: Color(0xFF8C7154),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+  // 레벨에 의한 데이터 총 집합
+  // dataBasedOnLevel[level!][1]과 같이 사용한다.
+  // [0]은 badge_map을 위해서
+  // [1]은 badge position을 위해서
+  // [2]는 profileCard를 위해서
+  // [3]은 milestone을 위해서
+  List<List<dynamic>> dataBasedOnLevel = [
+    [
+      'one',
+      [
+        {'top': 40, 'left': 90},
+        {'top': 90, 'left': 180},
+        {'top': 160, 'left': 250},
+        {'top': 210, 'left': 140},
+        {'top': 250, 'left': 40},
+      ],
+      '초보자',
+      '도전자',
+    ],
+    [
+      'two',
+      [
+        {'top': 20, 'left': 100},
+        {'top': 90, 'left': 200},
+        {'top': 130, 'left': 110},
+        {'top': 210, 'left': 190},
+        {'top': 250, 'left': 80},
+      ],
+      '도전자',
+      '모험가',
+    ],
+    [
+      'three',
+      [
+        {'top': 30, 'left': 190},
+        {'top': 90, 'left': 80},
+        {'top': 140, 'left': 200},
+        {'top': 200, 'left': 50},
+        {'top': 250, 'left': 150},
+      ],
+      '모험가',
+      '고수',
+    ],
+  ];
+
+  Widget growingMap() {
+    return SizedBox(
+      height: 355,
+      child: PageView.builder(
+        controller: PageController(
+          // 초기 화면은 level에 의해서 결정!
+          initialPage: level!,
+        ),
+        itemCount: 3,
+        itemBuilder: (BuildContext context, int pageIndex) {
+          // 전체 badge 개수
+          final badgeCount = currentStreak! + previousStreak!;
+
+          final showingBadgeCount = badgeCount - (5 * pageIndex);
+
+          return Stack(
+            children: [
+              badgeMap(pageIndex),
+              for(int i = 0; i<5; i++)...[
+                badges(dataBasedOnLevel[pageIndex][1][i], pageIndex, showingBadgeCount > i),
               ],
-            );
-          },
+              milestone(pageIndex),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget badgeMap(int pageIndex) {
+    return Container(
+      width: double.infinity,
+      height: 355,
+      margin: EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        image: DecorationImage(
+          image: AssetImage('assets/images/badge_map/badge_map_level_${dataBasedOnLevel[pageIndex][0]}.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget badges(Map<String, int> badgePositionData, int pageIndex, bool isFilled) {
+    print('현재 streak: $currentStreak');
+    print('이전 streak: $previousStreak');
+    // 전체 badge 개수
+    final badgeCount = currentStreak! + previousStreak!;
+
+    if (pageIndex == 0) {
+      if (badgeCount >= 5) {
+        // 다 채우면 됨.
+      } else {
+        // badgeCount만큼만 채우면 됨.
+      }
+    } else if (pageIndex == 1) {
+      if (badgeCount >= 10) {
+        // 다 채우면 됨
+      } else {
+        // badgeCount - 5만큼만 채우면 됨.
+      }
+    } else if (pageIndex == 2) {
+      if (badgeCount >= 15) {
+        // 다 채우면 됨
+      } else {
+        // badgeCount - 10만큼만 채우면 됨.
+      }
+    }
+
+    return Positioned(
+      top: badgePositionData['top']!.toDouble(),
+      left: badgePositionData['left']!.toDouble(),
+      child: Container(
+        width: 75,
+        height: 75,
+        decoration: BoxDecoration(
+          color: isFilled ? Color(0xFFFFF2CD) : Color(0xFFFFF2CD).withOpacity(0.5),
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: isFilled ? Center(
+          child: Image.asset(
+            'assets/images/badge_map/badge_map_a.png',
+            width: 40,
+            height: 40,
+          ),
+        ) : null,
+      ),
+    );
+  }
+
+  Widget milestone(int pageIndex) {
+    return Positioned(
+      bottom: 4,
+      right: 28,
+      child: Container(
+        width: 100,
+        height: 75,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/badge_map/badge_map_milestone.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Row(
+           children: [
+             SizedBox(width: 16),
+             Text(
+               dataBasedOnLevel[pageIndex][3]!,
+               style: TextStyle(
+                 color: Color(0xFF8C7154),
+                 fontWeight: FontWeight.bold,
+                 fontSize: 18,
+               ),
+             ),
+           ],
+          ),
         ),
       ),
     );
