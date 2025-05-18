@@ -133,7 +133,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
 
           // 3장 초과 선택된 경우 알림
           if (validFiles.length > 3) {
-            CustomSnackBar.show(context, '최대 3장까지만 선택 가능합니다. 처음 3장이 선택되었습니다.');
+            CustomSnackBar.show(context, '최대 3장까지만 선택 가능합니다.\n처음 3장이 선택되었습니다.');
           }
         }
       }
@@ -770,8 +770,9 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                         await storeSogam(_reflectionController.text.trim());
 
                         // 유저 등록.
-                        // 근데, 등록이 되어있으면 루틴로그만 등록하게 바꿔야 함.
+                        // 근데, 등록이 되어있으면 루틴로그만 등록.
                         await registerUser();
+
                         if (goalDate == "1") {
                           Navigator.of(parentContext).pushReplacement(
                             Routing.customPageRouteBuilder(RoutineScreenTwo(

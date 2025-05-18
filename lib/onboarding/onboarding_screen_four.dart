@@ -30,17 +30,17 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
   final List<List<String>> allRoutines = [
     // 생활습관
     ['생활습관', '1', '아침 물 한잔', '마시기', '매일 일어나자마자 물 한잔을 마시며 상쾌한 아침을 시작해요.', 'assets/images/suggested_routine/life_habit/one.png'],
-    ['생활습관', '2', '5분', '스트레칭 하기', '아침 기상 후 자리에서 할 수 있는 간단한 목, 어깨 스트레칭을 5분 간 해봐요.', 'assets/images/suggested_routine/life_habit/two.png'],
+    //['생활습관', '2', '5분', '스트레칭 하기', '아침 기상 후 자리에서 할 수 있는 간단한 목, 어깨 스트레칭을 5분 간 해봐요.', 'assets/images/suggested_routine/life_habit/two.png'],
     ['생활습관', '3', '기상 또는', '취침 시간 지키기', '비슷한 시간에 일어나고 잠들어봐요. 하루의 흐름을 건강하게 만드는 작은 약속이에요. (±30분 이내)', 'assets/images/suggested_routine/life_habit/three.png'],
-    ['생활습관', '4', '나를 위한', '건강식 한 끼', '나를 위해 정성껏 준비한 건강한 한 끼를 먹고 기록해요.', 'assets/images/suggested_routine/life_habit/four.png'],
+    //['생활습관', '4', '나를 위한', '건강식 한 끼', '나를 위해 정성껏 준비한 건강한 한 끼를 먹고 기록해요.', 'assets/images/suggested_routine/life_habit/four.png'],
     ['생활습관', '5', '내 공간', '1개 정돈하기', '하루에 하나, 침대나 책상 등 내 공간 중 한 곳을 정리해봐요. 공간이 정리되면 마음도 정리돼요.', 'assets/images/suggested_routine/life_habit/five.png'],
     ['생활습관', '6', '바람 따라', '걷기 20분', '바쁜 하루 중 잠시 멈추고, 주변을 둘러보며 산책해요. 몸도 마음도 한결 가벼워져요.', 'assets/images/suggested_routine/life_habit/six.png'],
     
     // 감정돌봄
     ['감정돌봄', '1', '오늘의 기분', '한 줄 남기기', '하루를 마무리하며, 내 감정이나 기분을 한 문장으로 기록해요. 조금 어설퍼도 괜찮아요.', 'assets/images/suggested_routine/emotion_control/one.png'],
     ['감정돌봄', '2', '고요한 숨,', '3분 호흡하기', '잠시 눈을 감고, 조용히 숨을 들이쉬고 내쉬어봐요. 3분 간 생각을 내려놓아요.', 'assets/images/suggested_routine/emotion_control/two.png'],
-    ['감정돌봄', '3', '1년 뒤의 나에게', '보내는 편지', '1년 뒤의 나에게 전하고 싶은 말을 솔직하고 자유롭게 적어봐요.', 'assets/images/suggested_routine/emotion_control/three.png'],
-    ['감정돌봄', '4', '마음에 새기는', '한 문장', '오늘의 기분과 닮은 명언이나 글귀를 찾아 읽고, 내 마음속에 새겨봐요.', 'assets/images/suggested_routine/emotion_control/four.png'],
+    //['감정돌봄', '3', '1년 뒤의 나에게', '보내는 편지', '1년 뒤의 나에게 전하고 싶은 말을 솔직하고 자유롭게 적어봐요.', 'assets/images/suggested_routine/emotion_control/three.png'],
+    //['감정돌봄', '4', '마음에 새기는', '한 문장', '오늘의 기분과 닮은 명언이나 글귀를 찾아 읽고, 내 마음속에 새겨봐요.', 'assets/images/suggested_routine/emotion_control/four.png'],
     ['감정돌봄', '5', '나에게 보내는', '칭찬 한마디', '오늘의 나를 스스로 칭찬해요. 타인과 비교하지 않고, 나 자신을 온전히 바라봐요.', 'assets/images/suggested_routine/emotion_control/five.png'],
     ['감정돌봄', '6', '나를 위한', '선물 사보기', '나를 위한 선물을 고민하고 골라봐요. 오로지 나를 위한 소비를 하며, 스스로를 돌보는 시간을 가질 수 있을 거예요.', 'assets/images/suggested_routine/emotion_control/six.png'],
     
@@ -49,12 +49,12 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
     ['대인관계', '2', '3분', '경청하기', '가족이나 친구와 눈을 맞추며 3분 동안 상대의 목소리에 귀기울여봐요.', 'assets/images/suggested_routine/human_relationship/two.png'],
     ['대인관계', '3', '작은 응원', '한마디', '라운지에서 다른 하루잇러들의 게시글에 댓글을 달아보고, 따뜻한 응원을 전해봐요.', 'assets/images/suggested_routine/human_relationship/three.png'],
     ['대인관계', '4', '고마운 사람에게', '마음 전하기', '오늘 고마운 사람에게 진심을 담은 한마디를 전해봐요. 사소한 말도 힘이 될 거예요.', 'assets/images/suggested_routine/human_relationship/four.png'],
-    ['대인관계', '5', '닮고 싶은', '배울 점 찾기', '내 주변의 소중한 사람을 떠올리며, 닮고 싶은 점이나 존경하는 점을 한 줄로 적어봐요.', 'assets/images/suggested_routine/human_relationship/five.png'],
-    ['대인관계', '6', '한 장의', '손편지 쓰기', '마음을 전하고 싶은 사람에게 손편지를 써서 전해봐요. 나의 진심이 잘 전해질 거예요.', 'assets/images/suggested_routine/human_relationship/six.png'],
+    //['대인관계', '5', '닮고 싶은', '배울 점 찾기', '내 주변의 소중한 사람을 떠올리며, 닮고 싶은 점이나 존경하는 점을 한 줄로 적어봐요.', 'assets/images/suggested_routine/human_relationship/five.png'],
+    //['대인관계', '6', '한 장의', '손편지 쓰기', '마음을 전하고 싶은 사람에게 손편지를 써서 전해봐요. 나의 진심이 잘 전해질 거예요.', 'assets/images/suggested_routine/human_relationship/six.png'],
     
     // 자기계발
-    ['자기계발', '1', '마음에 닿는', '한 줄 소개하기', '책이나 인터넷에서 마음에 드는 문장을 따라 써봐요. 글이 주는 힘을 믿어봐요.', 'assets/images/suggested_routine/personal_development/one.png'],
-    ['자기계발', '2', '멘토와의', '작은 만남', '멘토 한 분을 정해서 인터뷰해요. 닮고 싶은 사람의 얘기를 듣다 보면, 나도 성장해있을 거예요.', 'assets/images/suggested_routine/personal_development/two.png'],
+    //['자기계발', '1', '마음에 닿는', '한 줄 소개하기', '책이나 인터넷에서 마음에 드는 문장을 따라 써봐요. 글이 주는 힘을 믿어봐요.', 'assets/images/suggested_routine/personal_development/one.png'],
+    //['자기계발', '2', '멘토와의', '작은 만남', '멘토 한 분을 정해서 인터뷰해요. 닮고 싶은 사람의 얘기를 듣다 보면, 나도 성장해있을 거예요.', 'assets/images/suggested_routine/personal_development/two.png'],
     ['자기계발', '3', '내 관심 분야의', '글 읽기', '궁금한 분야의 기사나 책, 글을 읽고 인상 깊었던 부분이나 느낀 점을 차곡차곡 기록해요.', 'assets/images/suggested_routine/personal_development/three.png'],
     ['자기계발', '4', '오늘의 흥미', '저장하기', '요즘 끌리는 단어나 사물, 영상을 생각해보고, 어떤 부분이 흥미로웠는지 적어봐요.', 'assets/images/suggested_routine/personal_development/four.png'],
     ['자기계발', '5', '새로운 취미', '한 걸음', '그림, 요리, 언어 배우기 등 평소 해보고 싶었던 새로운 것들에 도전하며 새로운 즐거움을 느껴봐요.', 'assets/images/suggested_routine/personal_development/five.png'],

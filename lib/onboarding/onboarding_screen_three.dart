@@ -52,27 +52,27 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
               children: [
                 _buildCategoryItem(
                   themeName: '생활습관',
-                  color: const Color(0xFF4A90E2),
+                  color: const Color(0xFF7896FF),
                   hashtags: ['#건강', '#운동', '#생활 나눔'],
                 ),
                 _buildCategoryItem(
                   themeName: '감정돌봄',
-                  color: const Color(0xFFFFA07A),
+                  color: const Color(0xFFEA4793),
                   hashtags: ['#감정 기록', '#감정 표현'],
                 ),
                 _buildCategoryItem(
                   themeName: '대인관계',
-                  color: const Color(0xFFFFA500),
+                  color: const Color(0xFFFF9E28),
                   hashtags: ['#관계 연습', '#이해', '#소통'],
                 ),
                 _buildCategoryItem(
                   themeName: '자기계발',
-                  color: const Color(0xFF00C853),
+                  color: const Color(0xFF68BA5A),
                   hashtags: ['#자기 이해', '#진로', '#취미'],
                 ),
                 _buildCategoryItem(
                   themeName: '작은도전',
-                  color: const Color(0xFFB266FF),
+                  color: const Color(0xFFC262D3),
                   hashtags: ['#도전', '#용기', '#일상 관찰'],
                 ),
               ],

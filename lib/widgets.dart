@@ -159,7 +159,7 @@ class CustomSnackBar {
         margin: EdgeInsets.only(
           left: 16,
           right: 16,
-          bottom: 58, // 네비게이션 바 위로 올리기
+          bottom: (message == "남겨주신 사진과 소감을 저장하고 있어요\n조금만 기다려주세요") ? 300 : 58, // 네비게이션 바 위로 올리기
           top: 16,
         ),
       ),
