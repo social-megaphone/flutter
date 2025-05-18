@@ -8,10 +8,10 @@ import '../widgets.dart';
 import 'routine_screen_one.dart';
 
 class RoutineScreenTwo extends StatefulWidget {
-  const RoutineScreenTwo({super.key, required this.genesisRoutine});
+  const RoutineScreenTwo({super.key, required this.genesisRoutine, required this.howToRoutine});
 
   final List<String> genesisRoutine;
-
+  final String howToRoutine;
   @override
   State<RoutineScreenTwo> createState() => _RoutineScreenTwoState();
 }
@@ -101,6 +101,7 @@ class _RoutineScreenTwoState extends State<RoutineScreenTwo> {
                         Navigator.of(context).pop(
                           Routing.customPageRouteBuilder(RoutineScreenOne(
                             genesisRoutine: widget.genesisRoutine,
+                            howToRoutine: widget.howToRoutine,
                           ), 1000),
                         );
                       },

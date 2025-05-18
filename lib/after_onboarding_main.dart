@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../lounge/lounge_screen_main.dart';
 import '../save/save_screen_main.dart';
@@ -81,13 +82,25 @@ class _AfterOnboardingMainState extends State<AfterOnboardingMain> {
                   GestureDetector(
                     // Padding 부분도 터치되게 하는 코드.
                     behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        Routing.customPageRouteBuilder(
-                          OnboardingMain(pageIndex: 1, afterOnboarding: true),
-                          500,
-                        ),
-                      );
+                    onTap: () async {
+                      final fsStorage = FlutterSecureStorage();
+
+                      final streak = await fsStorage.read(key: 'streak');
+                      final goalDate = await fsStorage.read(key: 'goalDate');
+
+                      if(streak != null && goalDate != null && int.parse(streak) < int.parse(goalDate)) {
+                        CustomSnackBar.show(
+                          context,
+                          '현재 진행중인 루틴이 있어요.\n그걸 먼저 완료해볼까요?',
+                        );
+                      } else {
+                        Navigator.of(context).push(
+                          Routing.customPageRouteBuilder(
+                            OnboardingMain(pageIndex: 1, afterOnboarding: true),
+                            500,
+                          ),
+                        );
+                      }
                     },
                     child: Padding(
                       padding: EdgeInsets.symmetric(

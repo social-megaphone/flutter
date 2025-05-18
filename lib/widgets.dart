@@ -137,3 +137,32 @@ class AfterOnboarding {
     );
   }
 }
+
+class CustomSnackBar {
+  static void show(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Color(0xFF8C7154),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 58, // 네비게이션 바 위로 올리기
+          top: 16,
+        ),
+      ),
+    );
+  }
+}

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 
 class LoungePostScreen extends StatefulWidget {
   const LoungePostScreen({super.key, required this.postInfo});
@@ -27,20 +30,88 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
         return const Color(0xFF666666);
     }
   }
+
   late PageController pageController;
   int currentImageIndex = 0;
   final FocusNode _commentFocusNode = FocusNode();
+  final TextEditingController _commentController = TextEditingController();
+
+  // 상세 조회 상태
+  int likeCount = 0;
+  int commentCount = 0;
+  bool isLiked = false;
+  bool isBookmarked = false;
+  String performedAt = '';
+  List<Map<String, dynamic>> comments = [];
 
   @override
   void initState() {
     super.initState();
     pageController = PageController();
+    _fetchRoutineLogDetail();
+    _fetchComments();
+  }
+
+  final fsStorage = FlutterSecureStorage();
+
+  Future<void> _fetchRoutineLogDetail() async {
+    final routineLogId = widget.postInfo[0];
+
+    try {
+      final token = await fsStorage.read(key: 'jwt_token');
+      print('token: $token');
+
+      // 쿼리 파라미터 이렇게 처리하기도 하더라.
+      final uri = Uri.https('haruitfront.vercel.app', '/api/routine-log/detail', {'id': routineLogId});
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+        }, 
+      );
+
+      if (response.statusCode == 200) {
+        final routineLogDetatilData = jsonDecode(response.body);
+        print('routineLogDetatilData: $routineLogDetatilData');
+        setState(() {
+          likeCount = routineLogDetatilData['likeCount'] ?? 0;
+          commentCount = routineLogDetatilData['commentCount'] ?? 0;
+          isLiked = routineLogDetatilData['isLiked'] ?? false;
+          isBookmarked = routineLogDetatilData['isBookmarked'] ?? false;
+          performedAt = routineLogDetatilData['performedAt'] ?? '';
+          comments = List<Map<String, dynamic>>.from(routineLogDetatilData['comments'] ?? []);
+        });
+      } else {
+        print('루틴 로그 상세 조회 실패: statusCode=${response.statusCode}');
+      }
+    } catch (e) {
+      print('루틴 로그 상세 조회 중 예외 발생: $e');
+    }
+  }
+
+  Future<void> _fetchComments() async {
+    final routineLogId = widget.postInfo[0];
+    try {
+      final uri = Uri.https('haruitfront.vercel.app', '/api/comment', {'routineLogId': routineLogId});
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          comments = List<Map<String, dynamic>>.from(data['comments'] ?? []);
+        });
+      } else {
+        print('댓글 목록 조회 실패: statusCode=${response.statusCode}');
+      }
+    } catch (e) {
+      print('댓글 목록 조회 중 예외 발생: $e');
+    }
   }
 
   @override
   void dispose() {
     pageController.dispose();
     _commentFocusNode.dispose();
+    _commentController.dispose();
     super.dispose();
   }
 
@@ -81,7 +152,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
                         mainContent(), // 루틴 제목, 소감
                         SizedBox(height: 20),
                         commentPart(), // 댓글
-                        SizedBox(height: 80), // 댓글 입력창 높이만큼 여유 공간
+                        SizedBox(height: 100), // 댓글 입력창 높이만큼 여유 공간
                       ],
                     ),
                   ),
@@ -90,16 +161,11 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
             ),
           ),
           // 하단 고정 댓글 입력창
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Builder(
-              builder: (footerContext) => AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                padding: EdgeInsets.only(
-                  //bottom: MediaQuery.of(footerContext).viewInsets.bottom,
-                ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                padding: EdgeInsets.only(bottom: 16),
                 color: Color(0xFFFFF7DC),
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
@@ -115,6 +181,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
                       Expanded(
                         child: TextFormField(
                           focusNode: _commentFocusNode,
+                          controller: _commentController,
                           decoration: InputDecoration(
                             hintText: '댓글을 입력해보세요',
                             hintStyle: TextStyle(
@@ -155,8 +222,34 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
                       ),
                       IconButton(
                         icon: Icon(Icons.send, color: Color(0xFF8C7154)),
-                        onPressed: () {
-                          //print('댓글 전송됨');
+                        onPressed: () async {
+                          final content = _commentController.text.trim();
+                          if (content.isEmpty) return;
+                          final routineLogId = widget.postInfo[0];
+                          final token = await fsStorage.read(key: 'jwt_token');
+                          final uri = Uri.https('haruitfront.vercel.app', '/api/comment');
+                          final response = await http.post(
+                            uri,
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': 'Bearer $token',
+                            },
+                            body: jsonEncode({'routineLogId': routineLogId, 'content': content}),
+                          );
+                          if (response.statusCode == 200) {
+                            final data = jsonDecode(response.body);
+                            setState(() {
+                              comments.add({
+                                'nickname': data['nickname'] ?? '나',
+                                'content': data['content'] ?? content,
+                              });
+                              commentCount += 1;
+                            });
+                            _commentController.clear();
+                            _commentFocusNode.unfocus();
+                          } else {
+                            print('댓글 작성 실패: statusCode=${response.statusCode}');
+                          }
                         },
                       ),
                     ],
@@ -221,7 +314,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
             children: [
               TextSpan(
                 // 작성자 id
-                text: widget.postInfo[1],
+                text: widget.postInfo[2],
                 style: TextStyle(
                   color: Color(0xFF8C7154),
                 ),
@@ -242,7 +335,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
   }
 
   SizedBox pics() {
-    final List<String> imageUrls = widget.postInfo[4].isNotEmpty ? widget.postInfo[4].split(',') : [];
+    final List<String> imageUrls = widget.postInfo[5].isNotEmpty ? widget.postInfo[5].split(',') : [];
 
     return SizedBox(
       width: double.infinity,
@@ -337,11 +430,49 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
       // 시각적으로 vertical align 되게 하기 위해서, horizontal padding을 4 정도 줌.
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
-        children: const [
-          Icon(Icons.favorite_border, size: 24, color: Color(0xFF8C7154)),
+        children: [
+          GestureDetector(
+            onTap: () async {
+              // 루틴 Id
+              final routineLogId = widget.postInfo[0];
+
+              final token = await fsStorage.read(key: 'jwt_token');
+
+              final uri = Uri.https('haruitfront.vercel.app', '/api/like');
+              final response = await http.post(
+                uri,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode({'routineLogId': routineLogId}),
+              );
+
+              if (response.statusCode == 200) {
+                print('좋아요 토글 성공: ${response.body}');
+                final data = jsonDecode(response.body);
+                setState(() {
+                  if (data['liked'] == true) {
+                    isLiked = true;
+                    likeCount += 1;
+                  } else {
+                    isLiked = false;
+                    likeCount = likeCount > 0 ? likeCount - 1 : 0;
+                  }
+                });
+              } else {
+                print('좋아요 토글 실패: statusCode=${response.statusCode}');
+              }
+            },
+            child: Icon(
+              isLiked ? Icons.favorite : Icons.favorite_border,
+              size: 24,
+              color: Color(0xFF8C7154),
+            ),
+          ),
           SizedBox(width: 4),
           Text(
-            '10',
+            likeCount.toString(),
             style: TextStyle(
               color: Color(0xFF8C7154),
             ),
@@ -350,13 +481,41 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
           Icon(Icons.mode_comment_outlined, size: 24, color: Color(0xFF8C7154)),
           SizedBox(width: 4),
           Text(
-            '5',
+            commentCount.toString(),
             style: TextStyle(
               color: Color(0xFF8C7154),
             ),
           ),
           Spacer(),
-          Icon(Icons.bookmark_outline, size: 24, color: Color(0xFF8C7154)),
+          GestureDetector(
+            onTap: () async {
+              final routineLogId = widget.postInfo[0];
+              final token = await fsStorage.read(key: 'jwt_token');
+              final uri = Uri.https('haruitfront.vercel.app', '/api/bookmark');
+              final response = await http.post(
+                uri,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode({'routineLogId': routineLogId}),
+              );
+              if (response.statusCode == 200) {
+                print('북마크 토글 성공: ${response.body}');
+                final data = jsonDecode(response.body);
+                setState(() {
+                  isBookmarked = data['bookmarked'] ?? false;
+                });
+              } else {
+                print('북마크 토글 실패: statusCode=${response.statusCode}');
+              }
+            },
+            child: Icon(
+              isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+              size: 24,
+              color: Color(0xFF8C7154),
+            ),
+          ),
         ],
       ),
     );
@@ -374,28 +533,41 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              color: getTagColor(widget.postInfo[0]).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              widget.postInfo[2],
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF666666),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: getTagColor(widget.postInfo[1]).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  widget.postInfo[3], // 루틴 제목
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF666666),
+                  ),
+                ),
               ),
-            ),
+              Spacer(),
+              if (performedAt.isNotEmpty)
+                Text(
+                  performedAt.split('T').first,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF8C7154),
+                  ),
+                ),
+            ],
           ),
           SizedBox(height: 8),
           // 소감
           Text(
-            widget.postInfo[3],
+            widget.postInfo[4],
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -419,7 +591,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
                 ),
                 SizedBox(width: 4),
                 Text(
-                  '3',
+                  likeCount.toString(),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -433,7 +605,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
                 ),
                 SizedBox(width: 4),
                 Text(
-                  '2',
+                  likeCount.toString(),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -453,32 +625,25 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
       // 시각적으로 vertical align 되게 하기 위해서, horizontal padding을 2 정도 줌.
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: ListView.separated(
-        itemCount: commentList.length,
+        itemCount: comments.length,
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
         separatorBuilder: (context, index) => SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final comment = commentList[index];
-          return _buildComment(comment[0], comment[1]);
+          final comment = comments[index];
+          return _buildComment(
+            comment['nickname'] ?? '알 수 없음',
+            comment['content'],
+          );
         },
       ),
     );
   }
 
-  final List<List<String>> commentList = [
-    ['활발한 거북이', '우와! 진짜 깔끔해진 사진만 봐도 기분이 좋아져요. 저도 다음 루틴으로 해봐야겠네요!'],
-    ['유쾌한 참새', '루틴 완주를 응원해요! 화이팅~'],
-    ['느긋한 사자', '정말 멋져요. 꾸준함이 빛나네요!'],
-    ['창의적인 다람쥐', '저도 자극받아서 오늘 루틴 실천했어요.'],
-    ['진지한 부엉이', '사진에서 집중력이 느껴져요!'],
-    ['활발한 강아지', '정말 깨끗하네요~ 다음에도 기대할게요.'],
-    ['신중한 고양이', '꼼꼼하게 정리한 게 느껴져요. 대단해요!'],
-    ['열정적인 펭귄', '보기만 해도 저도 동기부여 되네요.'],
-    ['낙천적인 토끼', '감탄하고 갑니다~'],
-    ['조용한 여우', '루틴 공유해줘서 고마워요 :)'],
-  ];
-
   Widget _buildComment(String writer, String content) {
+    if (writer == null) {
+      print('[_buildComment] writer is null, content: $content');
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -486,7 +651,7 @@ class _LoungePostScreenState extends State<LoungePostScreen> {
           TextSpan(
             children: [
               TextSpan(
-                text: '$writer님 ',
+                text: '${writer ?? '알 수 없음'}님 ',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,

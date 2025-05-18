@@ -22,7 +22,7 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
   void initState() {
     super.initState();
     if(widget.initialSelectedCategory != '' && widget.onCategorySelected != null) {
-      selectedTags.add(widget.initialSelectedCategory);
+      selectedTheme = widget.initialSelectedCategory;
     }
   }
 
@@ -40,102 +40,127 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
           SizedBox(height: 10),
           // 메인 텍스트
           Onboarding.onboardingScreenMainTextContainer(
-            '우와, 정말 멋진 걸요?\n\n하루잇에서 시도해보고 싶은\n목표 태그를 골라주세요.'
+            '우와, 정말 멋진 걸요?\n\n하루잇에서 시도해보고 싶은\n루틴 테마를 골라주세요.'
           ),
           SizedBox(height: 16),
           // 선택 가능권
           Padding(
             padding: const EdgeInsets.all(16),
-            child: GridView.count(
-                crossAxisCount: 3, // 3열
-                mainAxisSpacing: 16, // 간격 늘림
-                crossAxisSpacing: 20, // 간격 늘림
-                childAspectRatio: 1/1, // 버튼 비율 원복
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildGridItem('생활습관'),
-                  _buildGridItem('감정돌봄'),
-                  _buildGridItem('대인관계'),
-                  _buildGridItem('자기계발'),
-                  _buildGridItem('작은도전'),
-                  _buildGridItem('기타'),
-                ],
-              ),
+            child: ListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildCategoryItem(
+                  themeName: '생활습관',
+                  color: const Color(0xFF4A90E2),
+                  hashtags: ['#건강', '#운동', '#생활 나눔'],
+                ),
+                _buildCategoryItem(
+                  themeName: '감정돌봄',
+                  color: const Color(0xFFFFA07A),
+                  hashtags: ['#감정 기록', '#감정 표현'],
+                ),
+                _buildCategoryItem(
+                  themeName: '대인관계',
+                  color: const Color(0xFFFFA500),
+                  hashtags: ['#관계 연습', '#이해', '#소통'],
+                ),
+                _buildCategoryItem(
+                  themeName: '자기계발',
+                  color: const Color(0xFF00C853),
+                  hashtags: ['#자기 이해', '#진로', '#취미'],
+                ),
+                _buildCategoryItem(
+                  themeName: '작은도전',
+                  color: const Color(0xFFB266FF),
+                  hashtags: ['#도전', '#용기', '#일상 관찰'],
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  List<String> selectedTags = []; // 선택된 태그들 저장
+  String selectedTheme = ''; // 선택한 테마
 
   final fsStorage = FlutterSecureStorage();
 
-  Future<void> storeTag(List<String> selectedTags) async {
-    await fsStorage.write(key: 'tag', value: selectedTags[0]);
+  Future<void> storeTheme(String selectedTheme) async {
+    await fsStorage.write(key: 'tag', value: selectedTheme);
     final saved = await fsStorage.read(key: 'tag');
-    print('태그 저장여부: $saved');
+    print('테마(저장될 땐 tag라는 key로 저장됨) 저장여부: $saved');
   }
 
-  // Firestore에 저장하는 코드
-  final firestore = FirebaseFirestore.instance;
+  Widget _buildCategoryItem({
+    required String themeName,
+    required Color color,
+    required List<String> hashtags,
+  }) {
 
-  Future<void> firestoreTag(List<String> selectedTags) async {
-    // selectedTags 중 1번째 값 (사실 값이 1개긴 함)
-    final tag = selectedTags[0];
-
-    // Hive/userBox 연 뒤
-    final userBox = Hive.box('userBox');
-
-    // uuid에 접근해서 이를 이름으로하는 doc을 업데이트
-    await firestore.collection('posts').doc(userBox.get('uuid')).update({
-      "tag" : tag,
-    });
-  }
-
-  Widget _buildGridItem(String tagName) {
-    final bool isSelected = selectedTags.contains(tagName);
+    final bool isSelected = selectedTheme == themeName;
 
     return GestureDetector(
       onTap: () {
         setState(() {
+          // selectedTheme 값 변경 부분 -> 이 값에 따라서, isSelected 값이 변경되고, 그 값에 따라서 child: Container의 색상값이 변경됨
           if (isSelected) {
-            selectedTags.clear(); // 선택 해제
+            selectedTheme = '';
           } else {
-            selectedTags
-              ..clear()
-              ..add(tagName); // 하나만 선택되도록
+            selectedTheme = themeName;
           }
-          storeTag(selectedTags);
-          widget.onCategorySelectionChanged?.call(selectedTags.isNotEmpty);
+
+          // FlutterSecureStorage에 저장하는 부분
+          storeTheme(selectedTheme);
+
+          // 선택된 테마가 변경되었을 때, 테마 선택 여부를 전달하는 부분
+          widget.onCategorySelectionChanged?.call(selectedTheme.isNotEmpty);
           if (!isSelected) {
-            widget.onCategorySelected?.call(tagName);
+            widget.onCategorySelected?.call(themeName);
           }
         });
       },
       child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8C7154) : Colors.white, // 선택되면 색 바뀜
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.07),
               blurRadius: 4,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Center(
-          child: Text(
-            tagName,
-            style: TextStyle(
-              fontSize: 14, // 폰트 크기 원복
-              fontWeight: FontWeight.w500,
-              color: isSelected ? Colors.white : Colors.black, // 글자색도 반전
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              themeName,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : color,
+              ),
             ),
-            textAlign: TextAlign.center, // 텍스트 중앙 정렬
-          ),
+            const SizedBox(width: 12),
+            Wrap(
+              spacing: 3,
+              children: hashtags.map((h) => Text(
+                h,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? Colors.white.withOpacity(0.85) : Colors.black.withOpacity(0.6),
+                ),
+              )).toList(),
+            ),
+          ],
         ),
       ),
     );

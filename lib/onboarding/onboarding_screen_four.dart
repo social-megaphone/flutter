@@ -4,6 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import '../routine/routine_screen_one.dart';
 
@@ -119,44 +121,6 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
       }
     }
   }
-
-  /*
-  void _filterRoutinesByTag() {
-    // 태그에 따른 루틴 ID를 매핑
-    Map<String, List<String>> tagToRoutineIds = {
-      '생활리듬': ['생활습관-1', '생활습관-2', '생활습관-3', '생활습관-4', '생활습관-5', '생활습관-6', '작은도전-4'],
-      '건강/운동': ['생활습관-1', '생활습관-2', '생활습관-3', '생활습관-4', '생활습관-6', '감정돌봄-2', '작은도전-4'],
-      '감정돌봄': ['감정돌봄-1', '감정돌봄-2', '감정돌봄-3', '감정돌봄-4', '감정돌봄-5', '감정돌봄-6', '대인관계-4', '대인관계-6'],
-      '자기이해': ['감정돌봄-1', '감정돌봄-3', '감정돌봄-5', '감정돌봄-6', '대인관계-5', '자기계발-1', '자기계발-2', '자기계발-3', '자기계발-4', '자기계발-5', '자기계발-6', '작은도전-1'],
-      '대인관계': ['대인관계-1', '대인관계-2', '대인관계-3', '대인관계-4', '대인관계-5', '대인관계-6', '자기계발-2'],
-      '취미탐색': ['자기계발-3', '자기계발-4', '자기계발-5'],
-      '진로탐색': ['자기계발-2', '자기계발-3', '자기계발-6'],
-      '자기계발': ['자기계발-1', '자기계발-2', '자기계발-3', '자기계발-4', '자기계발-5', '자기계발-6'],
-      '일상관찰': ['생활습관-6', '작은도전-2', '작은도전-3', '작은도전-4'],
-      '용기실천': ['대인관계-3', '작은도전-1', '작은도전-2', '작은도전-3', '작은도전-4'],
-      '기록/표현': ['감정돌봄-1', '감정돌봄-3', '감정돌봄-4', '대인관계-6', '자기계발-1', '작은도전-2', '작은도전-3'],
-      '기타': [] // 기타는 모든 루틴을 보여줌
-    };
-
-    if (widget.selectedTag == '기타') {
-      filteredRoutines = List.from(allRoutines);
-      return;
-    }
-
-    // 태그에 해당하는 루틴 ID 목록 가져오기
-    List<String>? routineIds = tagToRoutineIds[widget.selectedTag];
-    if (routineIds == null || routineIds.isEmpty) {
-      filteredRoutines = List.from(allRoutines);
-      return;
-    }
-
-    // 루틴 ID에 해당하는 루틴 찾기
-    filteredRoutines = allRoutines.where((routine) {
-      String routineId = "${routine[0]}-${routine[1]}";
-      return routineIds.contains(routineId);
-    }).toList();
-  }
-  */
 
   @override
   void dispose() {
@@ -426,6 +390,28 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
     });
   }
 
+  Future<String> fetchHowToRoutine(int index) async {
+    String howToRoutine = '';
+
+    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine');
+    final fetchResponse = await http.get(fetchUri);
+
+    if (fetchResponse.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
+      final routineName = '${filteredRoutines[index][2]} ${filteredRoutines[index][3]}';
+      
+      for (var routine in jsonData) {
+        if (routine['title'] == routineName) {
+          howToRoutine = routine['how'] ?? '인증 방법을 찾을 수 없습니다.';
+        }
+      }
+    } else {
+      howToRoutine = '인증 방법을 불러오는데 실패했습니다.';
+    }
+
+    return howToRoutine;
+  }
+
   Widget routineDialog(int index) {
     // 태그에 따른 색상 선택
     String tag = filteredRoutines[index][0];
@@ -515,14 +501,29 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                 // 도전 버튼
                 GestureDetector(
                   // RoutineScreen으로 이동하기
-                  onTap: () {
+                  onTap: () async {
+                    String howToRoutine = '인증 방법을 불러오는 중...';
+                    
+                    try {
+                      howToRoutine =await fetchHowToRoutine(index);
+                    } catch (e) {
+                      howToRoutine = '인증 방법을 불러오는데 오류가 발생했습니다.';
+                      print('explanationFinder error: $e');
+                    }
 
                     storeRoutineName('${filteredRoutines[index][2]} ${filteredRoutines[index][3]}');
+
+                    if (!mounted) return;
+
+                    // 이 두 값은, badge_screen_main에서 루틴 이어가기 눌렀을 때, routine_screen_one에 올 때 사용된다!
+                    await fsStorage.write(key: 'genesisRoutine', value: jsonEncode(filteredRoutines[index]));
+                    await fsStorage.write(key: 'howToRoutine', value: howToRoutine);
 
                     Navigator.of(context).pushReplacement(
                       PageRouteBuilder(
                         pageBuilder: (context, animation, secondaryAnimation) => RoutineScreenOne(
                           genesisRoutine: filteredRoutines[index],
+                          howToRoutine: howToRoutine,
                         ),
                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                           return FadeTransition(

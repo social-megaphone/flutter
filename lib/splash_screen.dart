@@ -50,6 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // response를 잘 받아 왔을 때,
       final data = jsonDecode(response.body);
       print('기존 사용자 확인됨: ${data["data"]["nickname"]}');
+      print('기존 사용자의 id: ${data["data"]["id"]}');
       return true;
     } else {
       // 그렇지 못 했을 때
@@ -92,7 +93,8 @@ class _SplashScreenState extends State<SplashScreen> {
     if(!mounted) return;
     Navigator.of(context).pushReplacement(
       Routing.customPageRouteBuilder(
-        isReturningUser ? AfterOnboardingMain() : OnboardingMain(),
+        // isReturningUser가 true면 BadgeScreenMain으로 이동. false면 OnboardingMain으로 이동.
+        isReturningUser ? AfterOnboardingMain(pageIndex: 2) : OnboardingMain(),
         300,
       ),
     );

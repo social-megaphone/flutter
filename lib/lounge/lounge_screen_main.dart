@@ -15,77 +15,140 @@ class LoungeScreenMain extends StatefulWidget {
 }
 
 class _LoungeScreenMainState extends State<LoungeScreenMain> {
-
+  // 태그 리스트
   List<String> tagList = ['전체', '생활습관', '감정돌봄', '대인관계', '자기계발', '작은도전'];
+
+  // SecureStorage 인스턴스
+  final fsStorage = FlutterSecureStorage();
+
+  // 루틴 로그 데이터 (각 포스트 정보)
+  List<List<String>> fetchedRoutineLogs = [];
+  List<List<String>> postInfoList = [];
+
+  // 페이지네이션 관련 상태
+  String? nextCursor; // 다음 페이지 커서
+  bool hasMore = true; // 더 불러올 데이터가 있는지
+  bool isLoading = false; // 현재 로딩 중인지
+  String selectedTag = '전체'; // 현재 선택된 태그
+
+  // 각 게시물별 이미지 PageView의 현재 인덱스 상태 관리
+  final Map<int, int> postPageIndices = {};
 
   @override
   void initState() {
     super.initState();
-
-    fetchRoutines(); // -> 이걸 하면 알아서 fetchedRoutineLogs가 업데이트 됨.
+    _fetchInitialRoutines(); // 최초 데이터 로드
   }
 
-  final fsStorage = FlutterSecureStorage();
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
-  List<List<String>> fetchedRoutineLogs = [];
+  // 최초 데이터 로드 (상태 초기화)
+  Future<void> _fetchInitialRoutines() async {
+    print('_fetchInitialRoutines: 상태 초기화 및 첫 fetchRoutines 호출');
+    setState(() {
+      fetchedRoutineLogs = [];
+      postInfoList = [];
+      nextCursor = null;
+      hasMore = true;
+      isLoading = false;
+    });
+    await fetchRoutines();
+  }
 
-  // '보여질 포스트들'의 정보를 담은 리스트
-  List<List<String>> postInfoList = [];
-
+  // 실제 API 호출 함수 (커서 기반 페이지네이션)
   Future<void> fetchRoutines() async {
-    // jwt_token 불러옴
+    print('fetchRoutines: 진입, isLoading=$isLoading, hasMore=$hasMore, nextCursor=$nextCursor');
+    if (isLoading || !hasMore) {
+      print('fetchRoutines: 중복 호출 방지로 리턴');
+      return;
+    }
+    setState(() { isLoading = true; });
+
     final String? token = await fsStorage.read(key: 'jwt_token');
-    if(token == null) {
-      print('jwt_token is null. error happened');
-    } else {
-      print('jwt_token exists: $token');
+    if (token == null) {
+      print('fetchRoutines: token이 null, 리턴');
+      setState(() { isLoading = false; });
+      return;
     }
 
-    // jwt_token 활용해서 루틴 로그 불러옴
-    final uri = Uri.parse('https://haruitfront.vercel.app/api/routine-log');
+    // 쿼리 파라미터 구성
+    final params = <String, String>{
+      'limit': '10',
+    };
+    if (nextCursor != null) {
+      params['cursor'] = nextCursor!;
+    }
+    final uri = Uri.https('haruitfront.vercel.app', '/api/routine-log', params);
+
+    print('fetchRoutines: GET $uri');
     final response = await http.get(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
-      }
+        'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {
-      // 받아오는 데이터 전체 -> jsonData
       final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      // 그 중, 루틴 로그와 관련된 부분 -> routineLogs
-      final List<dynamic> routineLogs = jsonData['routineLogs'];
-      // 그 중, 다음 커서와 관련된 부분 -> nextCursor
-      final String nextCursor = jsonData['nextCursor'];
-      // 그 중, 더 불러올 수 있는지 여부와 관련된 부분 -> hasMore
-      final bool hasMore = jsonData['hasMore'];
-
-
+      print('fetchRoutines: jsonData: $jsonData');
+      final List<dynamic> routineLogs = jsonData['routineLogs'] ?? [];
+      final String? newNextCursor = jsonData['nextCursor'];
+      final bool newHasMore = jsonData['hasMore'] ?? false;
 
       final List<List<String>> tempLogs = [];
-
-      for(var log in routineLogs) {
+      for (var log in routineLogs) {
         final String category = categoryFinder(log['title']);
-        final List<String> imageUrls = log['logImg'] != null ? 
-          (log['logImg'] as String).split(', ').where((url) => url.isNotEmpty).toList() : [];
-
-        tempLogs.add([
-          category,
-          log['nickname'],
-          log['title'],
-          log['reflection'],
-          imageUrls.join(','), // 이미지 URL들을 쉼표로 구분된 문자열로 저장
-        ]);
+        final List<String> imageUrls = log['logImg'] is List
+            ? List<String>.from(log['logImg'])
+            : (log['logImg']?.toString().split(', ') ?? []).where((url) => url.isNotEmpty).toList();
+        if (selectedTag == '전체' || category == selectedTag) {
+          tempLogs.add([
+            log['id'] ?? '',
+            category,
+            log['nickname'] ?? '',
+            log['title'] ?? '',
+            log['reflection'] ?? '',
+            imageUrls.join(','),
+          ]);
+        }
       }
 
+      print('fetchRoutines: 받아온 routineLogs 개수: ${tempLogs.length}');
       setState(() {
-        fetchedRoutineLogs = tempLogs;
-        postInfoList = List.from(fetchedRoutineLogs); // 여기서 같이 초기화
+        fetchedRoutineLogs.addAll(tempLogs); // append 방식
+        postInfoList = List.from(fetchedRoutineLogs);
+        nextCursor = newNextCursor;
+        hasMore = newHasMore;
+        isLoading = false;
       });
+      print('fetchRoutines: setState 후 postInfoList.length=${postInfoList.length}, nextCursor=$nextCursor, hasMore=$hasMore');
     } else {
-      print('오류 발생: ${response.statusCode}');
+      print('fetchRoutines: 오류 발생 statusCode=${response.statusCode}');
+      setState(() { isLoading = false; });
     }
+    print('fetchRoutines: 종료');
+  }
+
+  // 게시물 리스트 (무한스크롤 적용)
+  Widget postPart() {
+    return Column(
+      children: [
+        for (int i = 0; i < postInfoList.length; i++) ...[
+          _buildRoutineLogPost(postInfoList[i], i),
+          if (i != postInfoList.length - 1)
+            const SizedBox(height: 24), // 마지막 아이템 뒤에는 간격 없음
+        ],
+        if (hasMore)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: isLoading ? const CircularProgressIndicator() : const SizedBox()),
+          ),
+      ],
+    );
   }
 
   String categoryFinder(String title) {
@@ -130,20 +193,31 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        child: Column(
-          children: [
-            SizedBox(height: 16),
-            header(), // 제목 및 캐릭터 및 알림 버튼
-            SizedBox(height: 30),
-            tagPart(), // 태그
-            SizedBox(height: 18),
-            postPart(), // 게시물
-            SizedBox(height: 80),
-          ],
+    // NotificationListener로 스크롤 이벤트 감지하여 무한 스크롤 구현
+    return NotificationListener<ScrollNotification>(
+      onNotification: (scrollInfo) {
+        // 스크롤이 maxScrollExtent - 400 이상 내려오면 fetchRoutines 호출
+        if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 1000) {
+          print('NotificationListener: 끝에 가까워짐(-400), fetchRoutines 호출');
+          fetchRoutines();
+        }
+        return false;
+      },
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              SizedBox(height: 16),
+              header(), // 제목 및 캐릭터 및 알림 버튼
+              SizedBox(height: 30),
+              categoryPart(), // 태그
+              SizedBox(height: 18),
+              postPart(), // 게시물
+              SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );
@@ -169,20 +243,28 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
           Image.asset('assets/images/character_without_cushion.png', height: 80),
           Spacer(),
           // 알림 버튼
-          AfterOnboarding.notificationButton(Color(0xFFFFF7DC), Color(0xFF8C7154)),
+          GestureDetector(
+            onTap: () {
+              CustomSnackBar.show(
+                context,
+                '알림 기능은 현재 준비 중입니다.',
+              );
+            },
+            child: AfterOnboarding.notificationButton(Color(0xFFFFF7DC), Color(0xFF8C7154)),
+          ),
         ],
       ),
     );
   }
 
-  SizedBox tagPart() {
+  SizedBox categoryPart() {
     return SizedBox(
       height: 33,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: tagList.length,
         itemBuilder: (BuildContext context, int index) {
-          return _buildTag(tagList[index]);
+          return _buildCategory(tagList[index]);
         },
         separatorBuilder: (BuildContext context, int index) {
           return SizedBox(width: 8);
@@ -191,63 +273,48 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
     );
   }
 
-  String selectedTag = '전체';
-
-  Widget _buildTag(String tagName) {
-    // 태그에 따른 색상 반환 함수
+  // 태그 선택 시 데이터 리셋 후 새로 로드
+  Widget _buildCategory(String categoryName) {
     Color getTagColor(String tag) {
       switch (tag) {
-        case '전체':
-          return const Color(0xFF666666);
-        case '생활습관':
-          return const Color(0xFF7896FF);
-        case '감정돌봄':
-          return const Color(0xFFEA4793);
-        case '대인관계':
-          return const Color(0xFFFF9E28);
-        case '자기계발':
-          return const Color(0xFF68BA5A);
-        case '작은도전':
-          return const Color(0xFFC262D3);
-        default:
-          return const Color(0xFF666666);
+        case '전체': return const Color(0xFF666666);
+        case '생활습관': return const Color(0xFF7896FF);
+        case '감정돌봄': return const Color(0xFFEA4793);
+        case '대인관계': return const Color(0xFFFF9E28);
+        case '자기계발': return const Color(0xFF68BA5A);
+        case '작은도전': return const Color(0xFFC262D3);
+        default: return const Color(0xFF666666);
       }
     }
-
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedTag = tagName;
-          if (selectedTag == '전체') {
-            postInfoList = List.from(fetchedRoutineLogs);
-          } else {
-            postInfoList = fetchedRoutineLogs.where((post) => post[0] == selectedTag).toList();
-          }
+          selectedTag = categoryName;
         });
+        _fetchInitialRoutines(); // 태그 변경 시 데이터 리셋 후 새로 로드
       },
-      // 태그 컨테이너
       child: Container(
-        margin: (tagName == '전체') ? EdgeInsets.only(left: 16, bottom: 4) : (tagName == '작은도전') ? EdgeInsets.only(right: 16, bottom: 4) : EdgeInsets.only(bottom: 4),
+        margin: (categoryName == '전체') ? EdgeInsets.only(left: 16, bottom: 4) : (categoryName == '작은도전') ? EdgeInsets.only(right: 16, bottom: 4) : EdgeInsets.only(bottom: 4),
         padding: EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: selectedTag == tagName ? getTagColor(tagName) : const Color(0xFFFFFFFF),
+          color: selectedTag == categoryName ? getTagColor(categoryName) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((0.1 * 255).toInt()), // 아주 연한 그림자
-              blurRadius: 2, // 퍼짐 정도
-              spreadRadius: 0, // 그림자 크기 확장 없음
-              offset: Offset(0, 2), // 아래쪽으로 살짝 이동
+              color: Colors.black.withAlpha((0.1 * 255).toInt()),
+              blurRadius: 2,
+              spreadRadius: 0,
+              offset: Offset(0, 2),
             ),
-          ]
+          ],
         ),
         child: Center(
           child: Text(
-            tagName,
+            categoryName,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: (selectedTag == tagName) ? const Color(0xFFFFFFFF) : const Color(0xFF121212),
+              color: (selectedTag == categoryName) ? const Color(0xFFFFFFFF) : const Color(0xFF121212),
             ),
           ),
         ),
@@ -255,25 +322,11 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
     );
   }
 
-  ListView postPart() {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      scrollDirection: Axis.vertical,
-      itemCount: postInfoList.length,
-      itemBuilder: (BuildContext context, int index) {
-        return _buildRoutineLogPost(postInfoList[index]);
-      },
-      separatorBuilder: (BuildContext context, int index) {
-        return SizedBox(height: 24);
-      },
-    );
-  }
-
-  Widget _buildRoutineLogPost(List<String> postInfo) {
-    PageController pageController = PageController();
-    int currentIndex = 0;
-    final List<String> imageUrls = postInfo[4].isNotEmpty ? postInfo[4].split(',') : [];
+  Widget _buildRoutineLogPost(List<String> postInfo, int postIndex) {
+    final PageController pageController = PageController();
+    final List<String> imageUrls = postInfo[5].isNotEmpty ? postInfo[5].split(',') : [];
+    // 현재 게시물의 페이지 인덱스, 없으면 0
+    final int currentIndex = postPageIndices[postIndex] ?? 0;
 
     // 태그에 따른 색상 반환 함수 (배경색)
     Color getTagColor(String tag) {
@@ -348,7 +401,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: postInfo[1],
+                        text: postInfo[2],
                         style: const TextStyle(
                           color: Color(0xFF8C7154),
                         ),
@@ -377,7 +430,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                     border: Border.all(color: Color(0xFF8C7154), width: 1),
                   ),
                   child: Text(
-                    postInfo[0],
+                    postInfo[1],
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -399,7 +452,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                   pageSnapping: true,
                   onPageChanged: (index) {
                     setState(() {
-                      currentIndex = index;
+                      postPageIndices[postIndex] = index;
                     });
                   },
                   itemBuilder: (context, index) {
@@ -486,12 +539,12 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: getTagColor(postInfo[0]).withOpacity(0.2), // 태그 색상 20% 투명도
+                    color: getTagColor(postInfo[1]).withOpacity(0.2), // 태그 색상 20% 투명도
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Color(0xFFD9D9D9), width: 0.5),
                   ),
                   child: Text(
-                    postInfo[2],
+                    postInfo[3],
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -510,7 +563,7 @@ class _LoungeScreenMainState extends State<LoungeScreenMain> {
             const SizedBox(height: 8),
             // 소감
             Text(
-              postInfo[3],
+              postInfo[4],
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
