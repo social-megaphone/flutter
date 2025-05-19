@@ -13,14 +13,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // disable the debug banner at top right
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'NotoSansKR',
+    return Center(
+      child: MaterialApp(
+        // disable the debug banner at top right
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          fontFamily: 'NotoSansKR',
+        ),
+        // So, the application starts at SplashScreen
+        home: SplashScreen(),
       ),
-      // So, the application starts at SplashScreen
-      home: SplashScreen(),
     );
   }
 }

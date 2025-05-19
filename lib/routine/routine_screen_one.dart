@@ -7,18 +7,16 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'dart:math' as math;
 import 'dart:async';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart'; // 키보드 관련 패키지
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:http_parser/http_parser.dart'; // for image upload
 
 import '../falling_petal.dart';
-import '../onboarding/onboarding_main.dart';
 import '../widgets.dart';
-import 'routine_screen_two.dart';
+import '../onboarding/onboarding_main.dart';
 import '../after_onboarding_main.dart';
+import 'routine_screen_two.dart';
 
-// 여긴 루틴의 1일차만 기준으로 코딩! -> 그러면 안 됨...시발 어떡하냐 나???
 class RoutineScreenOne extends StatefulWidget {
   const RoutineScreenOne({
     super.key, 
@@ -34,46 +32,36 @@ class RoutineScreenOne extends StatefulWidget {
 }
 
 class _RoutineScreenOneState extends State<RoutineScreenOne> {
+
+  // TextEditingController for '소감' TextFormField
   final TextEditingController _reflectionController = TextEditingController();
+
+  // enable/disable the '다 했어요!' button
   bool isButtonEnabled = false;
+
   final ImagePicker _picker = ImagePicker();
-  List<File> _selectedImageFiles = []; // XFile 대신 File 객체 사용
+  List<File> _selectedImageFiles = [];
+
+
   String routineName = '';
   String goalDate = "1";
-
-  final ScrollController _scrollController = ScrollController();
-  final GlobalKey _textFieldKey = GlobalKey();
-  late final KeyboardVisibilityController _keyboardVisibilityController;
-  late final StreamSubscription<bool> _keyboardSubscription;
 
   @override
   void initState() {
     super.initState();
     routineName = '${widget.genesisRoutine[2]} ${widget.genesisRoutine[3]}';
+    // enable '다 했어요!' button when picture is selected and text is typed
     _reflectionController.addListener(() {
       setState(() {
-        // 사진이 선택되었고 텍스트가 입력되었을 때만 버튼 활성화
         isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
       });
-    });
-    _keyboardVisibilityController = KeyboardVisibilityController();
-    _keyboardSubscription = _keyboardVisibilityController.onChange.listen((visible) {
-      if (visible) {
-        // 키보드가 올라오면 TextFormField 위치로 스크롤
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToTextField();
-        });
-      }
     });
     _loadGoalDate();
   }
 
   @override
   void dispose() {
-    //_autoMoveTimer?.cancel(); // 타이머 정리
     _reflectionController.dispose();
-    _keyboardSubscription.cancel();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -168,27 +156,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     }
   }
 
-  // 왜 이게 잘 작동이 안되나...?
-  void _scrollToTextField() {
-    final RenderBox? renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      final position = renderBox.localToGlobal(Offset.zero);
-      final textFieldBottom = position.dy + renderBox.size.height;
-      final screenHeight = MediaQuery.of(context).size.height;
-      final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
-      // 키보드가 올라온 상태에서 TextFormField의 하단이 키보드 위 20px에 오도록 스크롤
-      final overlap = textFieldBottom - (screenHeight - keyboardHeight) + 20;
-      if (overlap > 0) {
-        _scrollController.animateTo(
-          _scrollController.offset + overlap,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    }
-  }
-
+  // create FlutterSecureStorage instance
   final fsStorage = FlutterSecureStorage();
 
   // 유저 가입 or 루틴 추가 or 루틴 이어가기
@@ -224,6 +192,10 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
         }
       }
     }
+
+    /// 여기까진 굉장히 빨리 처리된다.
+    /// 이 밑이 문제다.
+    /// 이미지 압축이 필요하다!
 
     // 사진 업로드 하는 곳
     final uriForImageUpload = Uri.parse('https://haruitfront.vercel.app/api/img-upload');
@@ -372,21 +344,21 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFFF7DC),
+      backgroundColor: CustomColors.defaultBackgroundColor,
       body: GestureDetector(
         onTap: () {
-          // TextFormField 바깥쪽 누르면, unfocus.
+          // unfocus when user taps outside of '소감' TextFormField
           FocusScope.of(context).unfocus();
         },
         child: Stack(
           children: [
-            // 꽃 떨어지는 부분
+            // background petal falling design
             ...List.generate(45, (index) => FallingPetal(
               indexForPositionX: index % 5,
               fallDelay: Duration(milliseconds: 500 * index),
             )),
+            // main content
             SingleChildScrollView(
-              controller: _scrollController,
               child: SafeArea(
                 child: Stack(
                   children: [
@@ -395,26 +367,24 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                       child: Column(
                         children: [
                           SizedBox(height: 40),
-                          titleAndCharacter(), // 제목과 캐릭터
+                          titleAndCharacter(),
                           SizedBox(height: 20),
-                          routineExplanation(), // 루틴 제목 + 루틴 설명 + 인증 방법
+                          routineExplanation(),
                           SizedBox(height: 20),
-                          uploadingPics(), // 사진 업로드 칸
+                          uploadingPics(),
                           SizedBox(height: 20),
-                          commentTextFormField(), // 소감 TextFormField
+                          commentTextFormField(),
                           SizedBox(height: 20),
-                          submitButton(), // 다했어요 버튼
+                          submitButton(),
                         ],
                       ),
                     ),
                     GestureDetector(
                       onTap: () {
-                        // 이전 화면으로 돌아가는 기능
-                        Navigator.of(context).pop(
-                          Routing.customPageRouteBuilder(OnboardingMain(
-                            pageIndex: 3,
-                          ), 1000),
-                        );
+                        // Move to previous screen
+                        // Case 1. badge_screen_main.dart
+                        // Case 2. onboarding_screen_four.dart
+                        Navigator.of(context).pop();
                       },
                       child: Routing.backButton(),
                     ),
@@ -725,7 +695,6 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
           fontWeight: FontWeight.w700,
           color: Color(0xFF121212),
         ),
-        key: _textFieldKey,
       ),
     );
   }

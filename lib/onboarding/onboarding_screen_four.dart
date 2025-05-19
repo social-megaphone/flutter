@@ -1,9 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inner_shadow/flutter_inner_shadow.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -132,7 +131,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 60),
+        SizedBox(height: (kIsWeb) ? 10 : 60),
         // 방석 아이콘 (width < height 이므로, height만 설정)
         Image.asset('assets/images/character_with_cushion.png', height: 175),
         SizedBox(height: 12),
@@ -372,22 +371,6 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
     await fsStorage.write(key: 'routineName', value: routineName);
     final saved = await fsStorage.read(key: 'routineName');
     print('루틴 이름 저장됨: $saved');
-  }
-
-  // Firestore에 저장하는 코드
-  final firestore = FirebaseFirestore.instance;
-
-  Future<void> firestoreRoutineName(String routineName) async {
-    // Hive/userBox 연 뒤
-    final userBox = Hive.box('userBox');
-
-
-    
-
-    // uuid에 접근해서 이를 이름으로하는 doc을 업데이트
-    await firestore.collection('posts').doc(userBox.get('uuid')).update({
-      "routineName" : routineName,
-    });
   }
 
   Future<String> fetchHowToRoutine(int index) async {

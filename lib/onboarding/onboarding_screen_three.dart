@@ -1,7 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets.dart';
 
@@ -34,7 +33,7 @@ class _OnboardingScreenThreeState extends State<OnboardingScreenThree> {
       ),
       child: Column(
         children: [
-          SizedBox(height: 50),
+          SizedBox(height: (kIsWeb) ? 10 : 50),
           // 방석 아이콘 (width < height 이므로, height만 설정)
           Image.asset('assets/images/character_with_cushion.png', height: 160),
           SizedBox(height: 10),

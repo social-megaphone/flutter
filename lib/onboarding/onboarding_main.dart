@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'onboarding_screen_one.dart';
 import 'onboarding_screen_two.dart';
@@ -136,7 +137,7 @@ class _OnboardingMainState extends State<OnboardingMain> {
             Positioned(
               left: 32,
               right: 32,
-              bottom: 40, // 40이나 넣는 이유는, SafeArea 밖이라 그래.
+              bottom: (kIsWeb) ? 0 : 40, // 40이나 넣는 이유는, SafeArea 밖이라 그래.
               child: GestureDetector(
                 onTap: _isNextEnabled ? () {
                   setState(() {

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../widgets.dart';
-import '../routine/routine_screen_one.dart';
+import 'dart:async';
 import 'dart:convert';
 
-// this is kinda home screen that user will see when they open the app.
+import '../widgets.dart';
+import '../routine/routine_screen_one.dart';
+
+// home of this application
 class BadgeScreenMain extends StatefulWidget {
   const BadgeScreenMain({super.key});
 
@@ -21,19 +22,22 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
     _checkRoutineCompletion();
   }
 
-  // CircularProgessIndicator 보여줄 지, 실제 화면 보여줄 지 결정
-  // 추후에 CircularProgessIndicator -> Skeleton 으로 바꿔야 함.
-  bool isLoaded = false;
+  // true -> CircularProgressIndicator
+  // false -> Real Screen
+  bool isLoading = false;
 
-  // nickname, goalDate, streak, previousStreak 받아오기
+  // FlutterSecureStorage instance
+  // read [nickname], [goalDate], [streak], [previousStreak]
   final fsStorage = FlutterSecureStorage();
 
-  // fsStorage에서 받아올 데이터들이 들어갈 곳
+  // variable that stores data read from fsStorage
   String? nickname;
   String? goalDate;
-  int? currentStreak; // 현재 루틴 몇 일 했는지
-  int? previousStreak; // 현재 루틴 이전의 루틴들까지 합쳐서 몇 일 했는지
-  int? level; // currentStreak, previeousStreak에 의해서 결정되는 level 값.
+  int? currentStreak; // streak for current routine
+  int? previousStreak; // streak for previous routine's'
+
+  // variable that determined by currentStreak and previousStreak
+  int? level;
 
   Future<void> _loadData() async {
     final storedNickname = await fsStorage.read(key: 'randomName');
@@ -49,7 +53,7 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
       currentStreak = (storedCurrentStreak != null) ? int.parse(storedCurrentStreak) : 0;
       previousStreak = (storedPreviousStreak != null) ? int.parse(storedPreviousStreak) : 0;
       level = (currentStreak! + previousStreak!) ~/ 5;
-      isLoaded = true;
+      isLoading = false;
     });
   }
 
@@ -57,23 +61,23 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
-      child: (isLoaded) ? Column(
+      child: (!isLoading) ? Column(
         children: [
           SizedBox(height: 16),
-          header(), // 제목 및 알림 버튼
+          header(), // '나의 하루잇 루틴 현황' + notification button
           SizedBox(height: 32),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                profileCard(), // 프로필 카드
-                progressCard(), // 진행도 카드
+                profileCard(),
+                progressCard(),
               ],
             ),
           ),
           SizedBox(height: 16),
-          growingMap(), // 하단 성장 배경 그림
+          growingMap(),
           SizedBox(height: 108),
         ],
       ) : SizedBox(
@@ -90,7 +94,6 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 제목
           Text(
             '나의 하루잇\n루틴 현황',
             style: TextStyle(
@@ -100,12 +103,12 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
             ),
           ),
           Spacer(),
-          // 알림 버튼
+          // notification button
           GestureDetector(
             onTap: () {
               CustomSnackBar.show(
                 context,
-                '알림 기능은 현재 준비 중입니다.',
+                '알림 기능은 현재 준비 중 입니다.',
               );
             },
             child: AfterOnboarding.notificationButton(Color(0xFF8C7154), Color(0xFFFCE9B2)),

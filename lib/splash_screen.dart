@@ -16,24 +16,22 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  // FlutterSecureStorage 인스턴스 생성
+  // create FlutterSecureStorage instance
   final fsStorage = FlutterSecureStorage();
 
   Future<bool> checkIfReturningUser() async {
-    // jwt_token이 있는 지 체크
+    // check whether JWT_TOKEN exists or not
     final String? token = await fsStorage.read(key: 'jwt_token');
 
+    // JWT_TOKEN does not exist (which means, this user is new user)
     if (token == null) {
-      // token이 없을 때 == 신규 사용자 일 때
-      print('jwt_token is null. this user is new user');
       return false;
     }
 
-    // token이 있을 때 == 기존 사용자 일 때
-    print('jwt_token is not null. this user is returning user');
+    // JWT_TOKEN exists (which means, this user is returning user)
     print('jwt_token: $token');
 
-    // /api/auth/mypage로 접근
+    // access to endpoint for user profile
     final uri = Uri.parse('https://haruitfront.vercel.app/api/auth/mypage');
 
     // /api/auth/mypage에 GET 요청 보냄 with [header]
@@ -59,53 +57,51 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  // Slogan, Character, Blur, Title을 보여줄 지 결정하는 boolean 변수 4개
+  // these will determine that widgets will be displayed or not
   bool _showSlogan = false;
   bool _showCharacter = false;
   bool _showBlur = false;
   bool _showTitle = false;
 
-  // Slogan, Character, Blur, Title을 차례대로 나타내고, 온보딩 화면으로 Navigate
-  Future<void> _animateAndNavigate() async {
-    // 슬로건 나타내기
-    await Future.delayed(Duration(milliseconds: 500), () {
+  // display widgets one by one
+  // and navigate to OnboardingMain or AfterOnboardingMain
+  Future<void> _displayAndNavigate() async {
+    await Future.delayed(Duration(milliseconds: 400), () {
       setState(() => _showSlogan = true);
     });
-    // 캐릭터 나타내기
-    await Future.delayed(Duration(milliseconds: 500), () {
+    await Future.delayed(Duration(milliseconds: 400), () {
       setState(() => _showCharacter = true);
     });
-    // 블러 효과 나타내기
-    await Future.delayed(Duration(milliseconds: 500), () {
+    await Future.delayed(Duration(milliseconds: 400), () {
       setState(() => _showBlur = true);
     });
-    // 타이틀 나타내기
-    await Future.delayed(Duration(milliseconds: 500*2), () {
+    await Future.delayed(Duration(milliseconds: 400*2), () {
       setState(() => _showTitle = true);
     });
 
-    // 모든 요소가 보여진 후 더 오래 대기
-    await Future.delayed(Duration(milliseconds: 750 * 2));
+    // Wait 1000 milliseconds after displaying all widgets
+    await Future.delayed(Duration(milliseconds: 500 * 2));
 
+    // check that user is whether new or returning
     final isReturningUser = await checkIfReturningUser();
 
-    // SplashScreen이 Widget Tree에 Mounted 되어있을 때만 온보딩 화면으로 Navigate
     if(!mounted) return;
+
+    // pageIndex: 2 -> BadgeScreenMain (which is home of this application)
     Navigator.of(context).pushReplacement(
       Routing.customPageRouteBuilder(
-        // isReturningUser가 true면 BadgeScreenMain으로 이동. false면 OnboardingMain으로 이동.
         isReturningUser ? AfterOnboardingMain(pageIndex: 2) : OnboardingMain(),
         300,
       ),
     );
   }
 
-  // initState에서는, MediaQuery, Theme등이 준비되지 않았음
-  // 그래서 _animateAndNavigate를 didChangeDependencies에서 처리
+  // MediaQuery and Theme are not ready in initState.
+  // So, we call _displayAndNavigate in didChangeDependencies
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _animateAndNavigate();
+    _displayAndNavigate();
   }
 
   @override
@@ -122,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 AnimatedOpacity(
                   opacity: _showSlogan ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 750),
+                  duration: Duration(milliseconds: 500),
                   child: _slogan(),
                 ),
                 SizedBox(height: 40),
@@ -133,24 +129,16 @@ class _SplashScreenState extends State<SplashScreen> {
                       opacity: _showBlur ? 1.0 : 0.0,
                       child: _blur(),
                     ),
-                    /*
-                    AnimatedOpacity(
-                      opacity: _showBlur ? 1.0 : 0.0,
-                      duration: Duration(milliseconds: 750),
-                      curve: Curves.easeInOutCubic,
-                      child: _blur(),
-                    ),
-                    */
                     AnimatedOpacity(
                       opacity: _showCharacter ? 1.0 : 0.0,
-                      duration: Duration(milliseconds: 750),
+                      duration: Duration(milliseconds: 500),
                       child: _character(),
                     ),
                   ],
                 ),
                 AnimatedOpacity(
                   opacity: _showTitle ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 750),
+                  duration: Duration(milliseconds: 500),
                   child: _title(),
                 ),
               ],

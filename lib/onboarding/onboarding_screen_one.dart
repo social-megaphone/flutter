@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 import '../widgets.dart';
 
@@ -39,22 +38,6 @@ class _OnboardingScreenOneState extends State<OnboardingScreenOne> {
     print('랜덤 이름 저장여부 : $saved');
   }
 
-  final firestore = FirebaseFirestore.instance;
-
-  Future<void> firestoreNickname(String nickname) async {
-    // 사용자별 고유한 id 생성
-    final uuid = Uuid().v4();
-
-    // 그 값을 Hive의 userBox/uuid에 넣기
-    final userBox = Hive.box('userBox');
-    userBox.put('uuid', uuid);
-
-    // uuid를 이름으로 하는 doc 만들어서 nickname 저장하기
-    await firestore.collection('posts').doc(uuid).set({
-      "nickname" : nickname,
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // 랜덤 형용사와 랜덤 동물로 랜덤 이름 생성
@@ -63,16 +46,11 @@ class _OnboardingScreenOneState extends State<OnboardingScreenOne> {
     // 그렇게 생성된 랜덤 이름을 fsStorage에 저장
     storeName(randomName);
 
-    // 랜덤 이름을 firestore에 저장.
-    firestoreNickname(randomName);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 32,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         children: [
-          SizedBox(height: 60),
+          SizedBox(height: (kIsWeb) ? 10 : 60),
           // 방석 아이콘 (width < height 이므로, height만 설정)
           Image.asset('assets/images/character_with_cushion.png', height: 175),
           SizedBox(height: 12),

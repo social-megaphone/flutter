@@ -1,8 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets.dart';
 
@@ -30,22 +29,6 @@ class _OnboardingScreenTwoState extends State<OnboardingScreenTwo> {
     await fsStorage.write(key: 'goalDate', value: _selectedDayCount.toString());
     final saved = await fsStorage.read(key: 'goalDate');
     print('목표 일수 저장여부: $saved');
-  }
-
-  // Firestore에 저장하는 코드
-  final firestore = FirebaseFirestore.instance;
-
-  Future<void> firestoreGoalDate(String goalDate) async {
-    // String goalDate를 int goalDateInt로 변경
-    final int goalDateInt = int.parse(goalDate);
-
-    // Hive/userBox 연 뒤
-    final userBox = Hive.box('userBox');
-
-    // uuid에 접근해서 이를 이름으로하는 doc을 업데이트
-    await firestore.collection('posts').doc(userBox.get('uuid')).update({
-      "goalDate" : goalDateInt,
-    });
   }
 
   @override
@@ -87,7 +70,7 @@ class _OnboardingScreenTwoState extends State<OnboardingScreenTwo> {
       ),
       child: Column(
         children: [
-          SizedBox(height: 60),
+          SizedBox(height: (kIsWeb) ? 10 : 60),
           // 방석 아이콘 (width < height 이므로, height만 설정)
           Image.asset('assets/images/character_with_cushion.png', height: 175),
           SizedBox(height: 12),
