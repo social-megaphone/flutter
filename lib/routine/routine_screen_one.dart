@@ -9,7 +9,10 @@ import 'dart:math' as math;
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:http_parser/http_parser.dart'; // for image upload
+import 'package:http_parser/http_parser.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 
 import '../falling_petal.dart';
 import '../widgets.dart';
@@ -19,7 +22,7 @@ import 'routine_screen_two.dart';
 
 class RoutineScreenOne extends StatefulWidget {
   const RoutineScreenOne({
-    super.key, 
+    super.key,
     required this.genesisRoutine,
     required this.howToRoutine,
   });
@@ -40,7 +43,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   bool isButtonEnabled = false;
 
   final ImagePicker _picker = ImagePicker();
-  List<File> _selectedImageFiles = [];
+  List<Uint8List> _selectedImageFiles = [];
 
 
   String routineName = '';
@@ -76,67 +79,117 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   // 이미지 선택 메서드
   Future<void> _pickImages() async {
     try {
-      // 갤러리에서 이미지 선택
-      final List<XFile> pickedImages = await _picker.pickMultiImage(
-        imageQuality: 80,
-        maxWidth: 1200,
-        maxHeight: 1200,
-        requestFullMetadata: false,
-      );
+      if (kIsWeb) {
+        // 웹 전용 이미지 선택 로직
+        final input = html.FileUploadInputElement()
+          ..accept = 'image/*'
+          ..multiple = true;
+        
+        input.click();
 
-      if (pickedImages.isEmpty || !mounted) return;
+        await input.onChange.first;
+        if (input.files == null || input.files!.isEmpty) return;
 
-      // 로딩 표시
-      CustomSnackBar.show(context, '이미지를 처리하는 중입니다...');
+        // 로딩 표시
+        CustomSnackBar.show(context, '이미지를 처리하는 중입니다...');
 
-      final List<File> validFiles = [];
+        final List<Uint8List> validImages = [];
+        
+        for (final file in input.files!) {
+          try {
+            final reader = html.FileReader();
+            reader.readAsArrayBuffer(file);
+            await reader.onLoad.first;
+            
+            final Uint8List imageBytes = reader.result as Uint8List;
+            print('웹 이미지 크기: ${imageBytes.length} bytes');
+            
+            if (imageBytes.isNotEmpty) {
+              validImages.add(imageBytes);
+            }
+          } catch (e) {
+            print('웹 이미지 처리 오류: $e');
+          }
+        }
+
+        if (mounted) {
+          if (validImages.isEmpty) {
+            print('웹: 유효한 이미지가 없음');
+            CustomSnackBar.show(context, '이미지를 가져올 수 없습니다. 다른 이미지를 선택해주세요.');
+          } else {
+            print('웹: 유효한 이미지 수: ${validImages.length}');
+            setState(() {
+              _selectedImageFiles = validImages.length > 3 ? validImages.sublist(0, 3) : validImages;
+              isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
+            });
+            ScaffoldMessenger.of(context).clearSnackBars();
+
+            if (validImages.length > 3) {
+              CustomSnackBar.show(context, '최대 3장까지만 선택 가능합니다.\n처음 3장이 선택되었습니다.');
+            }
+          }
+        }
+      } else {
+        // 모바일용 기존 이미지 선택 로직
+        final List<XFile> pickedImages = await _picker.pickMultiImage(
+          imageQuality: 80,
+          maxWidth: 1200,
+          maxHeight: 1200,
+          requestFullMetadata: false,
+        );
+
+        print('선택된 이미지 수: ${pickedImages.length}');
+
+        if (pickedImages.isEmpty || !mounted) return;
+
+        CustomSnackBar.show(context, '이미지를 처리하는 중입니다...');
+
+        final List<Uint8List> validImages = [];
+
+        for (final XFile pickedImage in pickedImages) {
+          try {
+            print('이미지 처리 시작: ${pickedImage.name}');
+            final Uint8List imageBytes = await pickedImage.readAsBytes();
+            print('이미지 바이트 크기: ${imageBytes.length}');
+            validImages.add(imageBytes);
+          } catch (e, stackTrace) {
+            print('개별 이미지 처리 오류: $e');
+            print('스택 트레이스: $stackTrace');
+          }
+        }
+
+        if (mounted) {
+          if (validImages.isEmpty) {
+            print('유효한 이미지가 없음');
+            CustomSnackBar.show(context, '이미지를 가져올 수 없습니다. 다른 이미지를 선택해주세요.');
+          } else {
+            print('유효한 이미지 수: ${validImages.length}');
+            setState(() {
+              _selectedImageFiles = validImages.length > 3 ? validImages.sublist(0, 3) : validImages;
+              isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
+            });
+            ScaffoldMessenger.of(context).clearSnackBars();
+
+            if (validImages.length > 3) {
+              CustomSnackBar.show(context, '최대 3장까지만 선택 가능합니다.\n처음 3장이 선택되었습니다.');
+            }
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      print('이미지 선택 중 오류 발생: $e');
+      print('스택 트레이스: $stackTrace');
       
-      for (final XFile pickedImage in pickedImages) {
-        try {
-          // 임시 파일 생성 (확장자 추출)
-          final String extension = pickedImage.path.split('.').last.toLowerCase();
-          final File tempFile = await _createTempFile(extension);
-          
-          // 원본 파일 내용을 임시 파일로 복사
-          final File originalFile = File(pickedImage.path);
-          if (await originalFile.exists()) {
-            await originalFile.copy(tempFile.path);
-            validFiles.add(tempFile);
-          }
-        } catch (e) {
-          print('개별 이미지 처리 오류: $e');
-        }
-      }
-
-      if (mounted) {
-        if (validFiles.isEmpty) {
-          CustomSnackBar.show(context, '이미지를 가져올 수 없습니다. 다른 이미지를 선택해주세요.');
-        } else {
-          setState(() {
-            // 3장 초과 선택 시 처음 3장만 사용
-            _selectedImageFiles = validFiles.length > 3 ? validFiles.sublist(0, 3) : validFiles;
-            isButtonEnabled = _reflectionController.text.trim().isNotEmpty && _selectedImageFiles.isNotEmpty;
-          });
-          ScaffoldMessenger.of(context).clearSnackBars();
-
-          // 3장 초과 선택된 경우 알림
-          if (validFiles.length > 3) {
-            CustomSnackBar.show(context, '최대 3장까지만 선택 가능합니다.\n처음 3장이 선택되었습니다.');
-          }
-        }
-      }
-    } catch (e) {
       if (mounted) {
         CustomSnackBar.show(context, '사진 선택 중 오류가 발생했습니다: $e');
-        
-        // 권한 관련 오류라면 수동으로 권한 요청
+
         if (e.toString().contains('permission')) {
           _requestPermissionManually();
         }
       }
     }
   }
-  
+
   // 수동 권한 요청
   Future<void> _requestPermissionManually() async {
     try {
@@ -169,28 +222,66 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     int goalDate = int.parse(goalDateString);
     final routineName = await fsStorage.read(key: 'routineName');
     final sogam = await fsStorage.read(key: 'sogam');
- 
+
     // routineId 가져오는 부분
     String routineId = "";
     final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine');
-    final fetchResponse = await http.get(fetchUri);
+    
+    // JWT 토큰 가져오기
+    final storedJwtToken = await fsStorage.read(key: 'jwt_token');
+    if (storedJwtToken == null) {
+      throw Exception('JWT 토큰이 없습니다');
+    }
+
+    final fetchResponse = await http.get(
+      fetchUri,
+      headers: {
+        'Authorization': 'Bearer $storedJwtToken',
+      },
+    );
 
     if(fetchResponse.statusCode == 200) {
       print('fetchResponse.statusCode is 200');
-      final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
-      
+      final Map<String, dynamic> jsonData = jsonDecode(fetchResponse.body);
       print('jsonData 출력: $jsonData');
+      print('찾으려는 routineName: $routineName');
 
-
-      for(var routine in jsonData) {
-        print("routine['title']은 ${routine['title']}");
-        if(routine['title'] == routineName) {
-          print('routineName은 $routineName');
-          print("routine['id']는 ${routine['id']}");
-          routineId = routine['id'];
-          print('그래서 routineId는 $routineId');
+      bool found = false;
+      if (jsonData.containsKey('routines')) {
+        final List<dynamic> routines = jsonData['routines'];
+        for(var routine in routines) {
+          print("routine['title']은 ${routine['title']}");
+          if(routine['title'] == routineName) {
+            print('routineName은 $routineName');
+            print("routine['id']는 ${routine['id']}");
+            routineId = routine['id'];
+            found = true;
+            print('그래서 routineId는 $routineId');
+            break;
+          }
         }
+
+        if (!found) {
+          print('경고: routineId를 찾을 수 없습니다!');
+          print('사용 가능한 루틴 목록:');
+          for(var routine in routines) {
+            print("- ${routine['title']} (id: ${routine['id']})");
+          }
+          throw Exception('routineId를 찾을 수 없습니다: $routineName');
+        }
+      } else {
+        print('응답에 routines 필드가 없습니다');
+        print('전체 응답: $jsonData');
+        throw Exception('API 응답 형식이 올바르지 않습니다');
       }
+    } else {
+      print('루틴 목록 가져오기 실패: ${fetchResponse.statusCode}');
+      print('응답 본문: ${fetchResponse.body}');
+      throw Exception('루틴 목록을 가져오는데 실패했습니다');
+    }
+
+    if (routineId.isEmpty) {
+      throw Exception('routineId가 비어있습니다');
     }
 
     /// 여기까진 굉장히 빨리 처리된다.
@@ -198,46 +289,13 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     /// 이미지 압축이 필요하다!
 
     // 사진 업로드 하는 곳
-    final uriForImageUpload = Uri.parse('https://haruitfront.vercel.app/api/img-upload');
-    final request = http.MultipartRequest('POST', uriForImageUpload);
-
-    for (int i = 0; i < _selectedImageFiles.length; i++) {
-      final file = await http.MultipartFile.fromPath(
-        'img',
-        _selectedImageFiles[i].path,
-        contentType: MediaType('image', 'png'),
-      );
-      request.files.add(file);
-    }
-
-    List<String> imageUrl = ["https://i.imgur.com/Ot5DWAW.png"]; // 기본값으로 더미 이미지 설정
-    final streamedResponse = await request.send();
-    final imgResponse = await http.Response.fromStream(streamedResponse);
-
-    if (imgResponse.statusCode == 200) {
-      final result = jsonDecode(imgResponse.body);
-      print("result: ${result['data']}");
-      if (result['data'] != null && result['data'].isNotEmpty) {
-        if(result['data'].first is List) {
-          // List<List<String>>을 List<String>으로 변환
-          imageUrl = (result['data'] as List).map((innerList) => innerList[0] as String).toList();
-        } else if (result['data'].first is String) {
-          imageUrl = (result['data'] as List).cast<String>();
-        }
-
-        print("업로드된 이미지 URL: $imageUrl");
-        print('업로드용 이미지 url string 버전: ${imageUrl.join(", ")}');
-      }
-    } else {
-      print('이미지 업로드 실패: ${imgResponse.statusCode}');
-      print('response.body: ${imgResponse.body}');
-    }
+    final imageUrls = await _uploadImages(_selectedImageFiles);
 
     // 여기까지 이미지 관련 코드
 
     // 에러났을 때 왜 에러났나 보게
     print('fetchResponse.statusCode: ${fetchResponse.statusCode}');
-    print('imgResponse.statusCode: ${imgResponse.statusCode}');
+    print('imgResponse.statusCode: ${imageUrls.length}');
 
     // 여기서 무조건 POST 해버리면, 항상 새 유저를 만드는 꼴 -> 프로필에서 과거 루틴을 못 불러오게 됨.
     // -> jwt_token이 없으면 지금처럼 (/api/auth/initial),
@@ -262,7 +320,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
             "id": routineId,
           },
           "reflection": sogam,
-          "imgSrc": imageUrl.join(", "), // List<String>을 컴마로 구분된 문자열로 변환
+          "imgSrc": imageUrls.join(", "), // List<String>을 컴마로 구분된 문자열로 변환
         }),
       );
 
@@ -296,10 +354,17 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
         },
         body: jsonEncode({
           "routineId" : routineId,
-          "logImg" :imageUrl.join(", "), // List<String>을 컴마로 구분된 문자열로 변환
+          "logImg" : imageUrls.join(", "), // List<String>을 컴마로 구분된 문자열로 변환
           "reflection" : sogam,
         }),
       );
+
+      // 디버그 로그 추가
+      print('routineId: $routineId');
+      print('sogam: $sogam');
+      print('imageUrls: $imageUrls');
+      print('jwtToken: $jwtToken');
+      print('요청 헤더: ${response.request?.headers}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -307,6 +372,8 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
         print('로그 추가 성공');
       } else {
         print('로그 추가 실패: ${response.statusCode}');
+        print('응답 본문: ${response.body}');
+        print('요청 헤더: ${response.request?.headers}');
       }
     }
 
@@ -339,6 +406,81 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
 
     print('goalDate 가져오기: $goalDate');
 
+  }
+
+  // 이미지 업로드 메서드
+  Future<List<String>> _uploadImages(List<Uint8List> images) async {
+    try {
+      print('이미지 업로드 시작: ${images.length}개');
+      final uriForImageUpload = Uri.parse('https://haruitfront.vercel.app/api/img-upload');
+      final request = http.MultipartRequest('POST', uriForImageUpload);
+
+      for (int i = 0; i < images.length; i++) {
+        final imageBytes = images[i];
+        final fileName = 'image_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        
+        print('이미지 ${i + 1} 업로드 준비: $fileName (${imageBytes.length} bytes)');
+        
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'img',
+            imageBytes,
+            filename: fileName,
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
+      }
+
+      List<String> imageUrl = ["https://i.imgur.com/Ot5DWAW.png"]; // 기본값으로 더미 이미지 설정
+      final streamedResponse = await request.send();
+      final imgResponse = await http.Response.fromStream(streamedResponse);
+
+      print('이미지 업로드 응답 상태 코드: ${imgResponse.statusCode}');
+      print('이미지 업로드 응답 본문: ${imgResponse.body}');
+
+      if (imgResponse.statusCode == 200) {
+        final result = jsonDecode(imgResponse.body);
+        if (result['data'] != null && result['data'].isNotEmpty) {
+          if(result['data'].first is List) {
+            imageUrl = (result['data'] as List).map((innerList) => innerList[0] as String).toList();
+          } else if (result['data'].first is String) {
+            imageUrl = (result['data'] as List).cast<String>();
+          }
+          print('업로드된 이미지 URL: $imageUrl');
+        }
+      } else {
+        print('이미지 업로드 실패: ${imgResponse.statusCode}');
+        print('응답 본문: ${imgResponse.body}');
+      }
+
+      return imageUrl;
+    } catch (e, stackTrace) {
+      print('이미지 업로드 중 오류 발생: $e');
+      print('스택 트레이스: $stackTrace');
+      return ["https://i.imgur.com/Ot5DWAW.png"]; // 오류 발생 시 기본 이미지 반환
+    }
+  }
+
+  // 이미지 표시 위젯
+  Widget _buildImagePreview(Uint8List imageBytes) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.memory(
+        imageBytes,
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('이미지 로드 오류: $error');
+          return Container(
+            width: 100,
+            height: 100,
+            color: Colors.grey[300],
+            child: Icon(Icons.broken_image, color: Colors.grey[600]),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -589,24 +731,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _selectedImageFiles[index],
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                print('이미지 로드 오류: $error');
-                                return Container(
-                                  width: 100,
-                                  height: 100,
-                                  color: Colors.grey[300],
-                                  child: Icon(Icons.broken_image, color: Colors.grey[600]),
-                                );
-                              },
-                            ),
-                          ),
+                          _buildImagePreview(_selectedImageFiles[index]),
                           Positioned(
                             top: 4,
                             right: 4,
@@ -702,7 +827,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
   GestureDetector submitButton() {
     return GestureDetector(
       onTap: () async {
-        if (isButtonEnabled) {
+        if ((kIsWeb) ? true : isButtonEnabled) {
           final parentContext = context;
           showModalBottomSheet(
             context: parentContext,

@@ -40,6 +40,11 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
   int? level;
 
   Future<void> _loadData() async {
+    print('loadData 호출됨');
+    setState(() {
+      isLoading = true;
+    });
+
     final storedNickname = await fsStorage.read(key: 'randomName');
     final storedGoalDate = await fsStorage.read(key: 'goalDate');
     final storedCurrentStreak = await fsStorage.read(key: 'streak');
@@ -47,8 +52,13 @@ class _BadgeScreenMainState extends State<BadgeScreenMain> {
 
     if (!mounted) return;
 
+    print('storedNickname: $storedNickname');
+    print('storedGoalDate: $storedGoalDate');
+    print('storedCurrentStreak: $storedCurrentStreak');
+    print('storedPreviousStreak: $storedPreviousStreak');
+
     setState(() {
-      nickname = storedNickname;
+      nickname = storedNickname ?? '랜덤 닉네임';
       goalDate = (storedGoalDate != null) ? storedGoalDate : null;
       currentStreak = (storedCurrentStreak != null) ? int.parse(storedCurrentStreak) : 0;
       previousStreak = (storedPreviousStreak != null) ? int.parse(storedPreviousStreak) : 0;
