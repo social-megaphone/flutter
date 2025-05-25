@@ -222,71 +222,39 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     int goalDate = int.parse(goalDateString);
     final routineName = await fsStorage.read(key: 'routineName');
     final sogam = await fsStorage.read(key: 'sogam');
-
+    
+    String routineId = routineIdFinder(routineName!) ?? '';
+    
+    /*
     // routineId 가져오는 부분
     String routineId = "";
     final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine');
-    
-    // JWT 토큰 가져오기
-    final storedJwtToken = await fsStorage.read(key: 'jwt_token');
-    if (storedJwtToken == null) {
-      throw Exception('JWT 토큰이 없습니다');
-    }
-
-    final fetchResponse = await http.get(
-      fetchUri,
-      headers: {
-        'Authorization': 'Bearer $storedJwtToken',
-      },
-    );
+    final fetchResponse = await http.get(fetchUri);
 
     if(fetchResponse.statusCode == 200) {
       print('fetchResponse.statusCode is 200');
-      final Map<String, dynamic> jsonData = jsonDecode(fetchResponse.body);
+      final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
+
       print('jsonData 출력: $jsonData');
-      print('찾으려는 routineName: $routineName');
 
-      bool found = false;
-      if (jsonData.containsKey('routines')) {
-        final List<dynamic> routines = jsonData['routines'];
-        for(var routine in routines) {
-          print("routine['title']은 ${routine['title']}");
-          if(routine['title'] == routineName) {
-            print('routineName은 $routineName');
-            print("routine['id']는 ${routine['id']}");
-            routineId = routine['id'];
-            found = true;
-            print('그래서 routineId는 $routineId');
-            break;
-          }
+      for(var routine in jsonData) {
+        print("routine['title']은 ${routine['title']}");
+        if(routine['title'] == routineName) {
+          print('routineName은 $routineName');
+          print("routine['id']는 ${routine['id']}");
+          routineId = routine['id'];
+          print('그래서 routineId는 $routineId');
         }
-
-        if (!found) {
-          print('경고: routineId를 찾을 수 없습니다!');
-          print('사용 가능한 루틴 목록:');
-          for(var routine in routines) {
-            print("- ${routine['title']} (id: ${routine['id']})");
-          }
-          throw Exception('routineId를 찾을 수 없습니다: $routineName');
-        }
-      } else {
-        print('응답에 routines 필드가 없습니다');
-        print('전체 응답: $jsonData');
-        throw Exception('API 응답 형식이 올바르지 않습니다');
       }
     } else {
-      print('루틴 목록 가져오기 실패: ${fetchResponse.statusCode}');
-      print('응답 본문: ${fetchResponse.body}');
-      throw Exception('루틴 목록을 가져오는데 실패했습니다');
+      print('/api/routine이 정상작동하지 않음.');
+      print('/api/routine에 대한 fetchResponse.statusCode: ${fetchResponse.statusCode}');
     }
-
-    if (routineId.isEmpty) {
-      throw Exception('routineId가 비어있습니다');
-    }
-
+    */
+    
     /// 여기까진 굉장히 빨리 처리된다.
     /// 이 밑이 문제다.
-    /// 이미지 압축이 필요하다!
+    /// 이미지 압축?
 
     // 사진 업로드 하는 곳
     final imageUrls = await _uploadImages(_selectedImageFiles);
@@ -294,7 +262,7 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
     // 여기까지 이미지 관련 코드
 
     // 에러났을 때 왜 에러났나 보게
-    print('fetchResponse.statusCode: ${fetchResponse.statusCode}');
+    //print('fetchResponse.statusCode: ${fetchResponse.statusCode}');
     print('imgResponse.statusCode: ${imageUrls.length}');
 
     // 여기서 무조건 POST 해버리면, 항상 새 유저를 만드는 꼴 -> 프로필에서 과거 루틴을 못 불러오게 됨.
@@ -408,6 +376,53 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
 
   }
 
+  String? routineIdFinder(String routineName) {
+    switch (routineName) {
+      case '아침 물 한잔 마시기':
+        return '6822a2cfe908569ba237f27d';
+      case '기상 또는 취침 시간 지키기':
+        return '6822a2d0e908569ba237f285';
+      case '내 공간 1개 정돈하기':
+        return '6822a2d1e908569ba237f28f';
+      case '바람 따라 걷기 20분':
+        return '1effefd7-e1d4-4304-bd46-df9b0f5446f1';
+      case '오늘의 기분 한 줄 남기기':
+        return '6822a2d2e908569ba237f299';
+      case '고요한 숨, 3분 호흡하기':
+        return '6822a2d2e908569ba237f29e';
+      case '나를 위한 선물 사보기':
+        return '6822a2d4e908569ba237f2b7';
+      case '나에게 보내는 칭찬 한마디':
+        return '6822a2d4e908569ba237f2b0';
+      case '일일 간단한 대화하기':
+        return '6822a2d5e908569ba237f2bf';
+      case '3분 경청하기':
+        return '6822a2d5e908569ba237f2c2';
+      case '작은 응원 한마디':
+        return '6822a2d6e908569ba237f2c5';
+      case '고마운 사람에게 마음 전하기':
+        return '6822a2d6e908569ba237f2ca';
+      case '내 관심 분야의 글 읽기':
+        return '6822a2d9e908569ba237f2e5';
+      case '오늘의 흥미 저장하기':
+        return '6822a2d9e908569ba237f2ea';
+      case '새로운 취미 한 걸음':
+        return '6822a2dae908569ba237f2f1';
+      case '내가 꿈꾸는 나':
+        return '6822a2dae908569ba237f2f8';
+      case '스스로 음식 주문해보기':
+        return '6822a2dbe908569ba237f2fe';
+      case '오늘의 랜덤 이동 기록하기':
+        return '6822a2dbe908569ba237f303';
+      case '오늘의 하늘 기록하기':
+        return '6822a2dce908569ba237f308';
+      case '목적 없는 가벼운 산책':
+        return '6822a2dce908569ba237f30d';
+    }
+    return null;
+  }
+  
+  
   // 이미지 업로드 메서드
   Future<List<String>> _uploadImages(List<Uint8List> images) async {
     try {
@@ -485,6 +500,9 @@ class _RoutineScreenOneState extends State<RoutineScreenOne> {
 
   @override
   Widget build(BuildContext context) {
+
+    print('widget.howToRoutine: ${widget.howToRoutine}');
+
     return Scaffold(
       backgroundColor: CustomColors.defaultBackgroundColor,
       body: GestureDetector(

@@ -374,24 +374,54 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
   }
 
   Future<String> fetchHowToRoutine(int index) async {
+    print('fetchHowToRoutine 시작');
+    final routineName = '${filteredRoutines[index][2]} ${filteredRoutines[index][3]}';
+
     String howToRoutine = '';
-
-    final fetchUri = Uri.parse('https://haruitfront.vercel.app/api/routine');
-    final fetchResponse = await http.get(fetchUri);
-
-    if (fetchResponse.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(fetchResponse.body);
-      final routineName = '${filteredRoutines[index][2]} ${filteredRoutines[index][3]}';
-      
-      for (var routine in jsonData) {
-        if (routine['title'] == routineName) {
-          howToRoutine = routine['how'] ?? '인증 방법을 찾을 수 없습니다.';
-        }
-      }
-    } else {
-      howToRoutine = '인증 방법을 불러오는데 실패했습니다.';
+    switch (routineName) {
+      case '아침 물 한잔 마시기':
+        howToRoutine = '아침에 물을 마신 컵 또는 잔의 사진을 찍고, 실천해본 한 줄 소감을 적어요.';
+      case '기상 또는 취침 시간 지키기':
+        howToRoutine = '기상 시간과 취침 시간이 보이도록 사진을 찍고, 실천한 소감을 간단히 남겨요.';
+      case '내 공간 1개 정돈하기':
+        howToRoutine = '정리한 공간, 물건의 전후 비교 사진 또는 정리 후 결과 사진을 찍고, 소감을 적어요.';
+      case '바람 따라 걷기 20분':
+        howToRoutine = '산책 중 찍은 거리, 나무, 하늘 등의 사진과 만보기 사진을 함께 남기고, 산책에 대한 소감을 남겨요.';
+      case '오늘의 기분 한 줄 남기기':
+        howToRoutine = '내 감정을 떠올리게 하는 사진을 찍거나, 감정을 표현한 이미지를 올려요. 한 문장으로 오늘의 기분을 기록해요.';
+      case '고요한 숨, 3분 호흡하기':
+        howToRoutine = '창가, 방 한 켠 등 실천한 장소의 사진을 찍고, 짧은 소감을 남겨요.';
+      case '나를 위한 선물 사보기':
+        howToRoutine = '가격과 상관없이 나를 위한 선물을 구매 후 사진을 찍고, 선물을 고른 이유나 소감을 적어요.';
+      case '나에게 보내는 칭찬 한마디':
+        howToRoutine = '칭찬하고 싶은 장면이나 순간을 사진으로 찍고, 나를 위한 칭찬과 짧은 소감을 적어요.';
+      case '일일 간단한 대화하기':
+        howToRoutine = '대화 중인 공간(예: 식탁, 산책길 등) 사진 또는 함께한 사람과의 사진을 찍어요. 오늘 대화에서 인상 깊었던 한 마디나 느낀 점을 한 줄로 기록해요.';
+      case '3분 경청하기':
+        howToRoutine = '대화한 공간의 사진을 찍고, 경청하며 느낀 점을 한 줄로 남겨요.';
+      case '작은 응원 한마디':
+        howToRoutine = '매일 1회 라운지 댓글을 남기고, 작성 화면을 캡처해요. 간단한 소감을 함께 남겨요.';
+      case '고마운 사람에게 마음 전하기':
+        howToRoutine = '고마운 마음을 표현한 메모지, 메시지, 또는 답변 내용을 캡쳐해요. 고마운 마음을 전한 이유와 소감을 한 줄로 기록해요.';
+      case '내 관심 분야의 글 읽기':
+        howToRoutine = '책에서 마음에 드는 문장이나 기사 글 화면을 캡쳐하고, 소감을 글로 정리해요.';
+      case '오늘의 흥미 저장하기':
+        howToRoutine = '저장한 영상이나 사물의 사진을 캡쳐하고, 이유와 소감을 작성해요.';
+      case '새로운 취미 한 걸음':
+        howToRoutine = '새로운 활동에 도전하는 모습을 담은 사진을 업로드하고, 도전을 통해 변화한 나의 소감을 적어요.';
+      case '내가 꿈꾸는 나':
+        howToRoutine = '해보고 싶은 일을 그림 일기로 그려보고, 이유와 소감을 함께 기록해요.';
+      case '스스로 음식 주문해보기':
+        howToRoutine = '실제로 직접 주문해 받은 영수증을 음식과 함께 찍고, 도전 후 느낀 소감과 변화를 적어봐요.';
+      case '오늘의 랜덤 이동 기록하기':
+        howToRoutine = '대중 교통 (버스, 지하철) 안에서 바라본 풍경을 사진으로 찍고, 인상 깊었던 역, 정류장 풍경, 이동 중 느낀점 등 소감을 적어요.';
+      case '오늘의 하늘 기록하기':
+        howToRoutine = '하늘을 찍은 사진을 업로드하고, 떠오른 생각이나 느낌을 기록해요.';
+      case '목적 없는 가벼운 산책':
+        howToRoutine = '산책 중 찍은 사진을 한 장 업로드하고, 걷는 동안 들었던 생각을 소감으로 적어요.';
     }
 
+    print('fetchHowToRoutine 끝');
     return howToRoutine;
   }
 
@@ -488,7 +518,7 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                     String howToRoutine = '인증 방법을 불러오는 중...';
                     
                     try {
-                      howToRoutine =await fetchHowToRoutine(index);
+                      howToRoutine = await fetchHowToRoutine(index);
                     } catch (e) {
                       howToRoutine = '인증 방법을 불러오는데 오류가 발생했습니다.';
                       print('explanationFinder error: $e');
@@ -501,6 +531,8 @@ class _OnboardingScreenFourState extends State<OnboardingScreenFour> {
                     // 이 두 값은, badge_screen_main에서 루틴 이어가기 눌렀을 때, routine_screen_one에 올 때 사용된다!
                     await fsStorage.write(key: 'genesisRoutine', value: jsonEncode(filteredRoutines[index]));
                     await fsStorage.write(key: 'howToRoutine', value: howToRoutine);
+
+                    print('howToRoutine: $howToRoutine');
 
                     Navigator.of(context).pushReplacement(
                       PageRouteBuilder(
